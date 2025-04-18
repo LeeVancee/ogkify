@@ -48,6 +48,7 @@ model Product {
   colors      Color[] // Many-to-many relation with Color
   sizes       Size[] // Many-to-many relation with Size
   orderItems  OrderItem[]
+  cartItems   CartItem[] // 新增: 与购物车项的关系
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   images      Image[]
@@ -92,6 +93,35 @@ model Image {
   @@index([productId])
 }
 
+// 新增: 购物车模型
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+// 新增: 购物车项目模型
+model CartItem {
+  id        String   @id @default(cuid())
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int      @default(1)
+  colorId   String? // 可选的颜色选择
+  sizeId    String? // 可选的尺寸选择
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cartId])
+  @@index([productId])
+}
+
 enum OrderStatus {
   PENDING // 待处理/未支付
   PAID // 已支付/处理中
@@ -106,6 +136,7 @@ model User {
   emailVerified Boolean
   image         String?
   orders        Order[] // 从Customer迁移
+  carts         Cart[] // 新增: 与购物车的关系
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   role          String?
