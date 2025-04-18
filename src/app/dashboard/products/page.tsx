@@ -1,10 +1,10 @@
 import type React from 'react';
 import Link from 'next/link';
-import { ProductsView } from '../../../components/products-view';
+import { ProductsView } from '../../../components/dashboard/products-view';
 import { Button } from '@/components/ui/button';
 
 import { Plus } from 'lucide-react';
-import { getProducts } from '@/actions/product';
+import { getProducts } from '@/actions/products';
 
 export default async function ProductsPage() {
   const products = await getProducts();

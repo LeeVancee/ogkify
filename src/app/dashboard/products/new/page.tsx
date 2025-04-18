@@ -1,5 +1,5 @@
-import { ProductForm } from '../../../../components/product-form';
-import { getCategories, getColors, getSizes } from '@/actions/product';
+import { ProductForm } from '../../../../components/dashboard/product-form';
+import { getCategories, getColors, getSizes } from '@/actions/products';
 
 export default async function NewProductPage() {
   const [categories, colors, sizes] = await Promise.all([getCategories(), getColors(), getSizes()]);

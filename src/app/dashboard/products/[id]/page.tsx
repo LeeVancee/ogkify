@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
-import { EditProductForm } from '../../../../components/edit-product-form';
+import { EditProductForm } from '../../../../components/dashboard/edit-product-form';
 
-import { getProduct, getCategories, getColors, getSizes } from '@/actions/product';
+import { getProduct, getCategories, getColors, getSizes } from '@/actions/products';
 
 export default async function EditProductPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;

@@ -12,12 +12,35 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UploadThingImage } from '@/components/upload-thing';
+import { UploadThingImage } from '@/components/dashboard/upload-thing';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
-import { updateProduct } from '@/actions/product';
+import { createProduct } from '@/actions/products';
 
-const formSchema = z.object({
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface Color {
+  id: string;
+  name: string;
+  value: string;
+}
+
+interface Size {
+  id: string;
+  name: string;
+  value: string;
+}
+
+interface ProductFormProps {
+  categories: Category[];
+  colors: Color[];
+  sizes: Size[];
+}
+
+const productFormSchema = z.object({
   name: z.string().min(1, {
     message: '商品名称至少需要1个字符。',
   }),
@@ -43,75 +66,40 @@ const formSchema = z.object({
   isArchived: z.boolean().default(false),
 });
 
-interface ProductFormValues {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-  categoryId: string;
-  colorIds: string[];
-  sizeIds: string[];
-  images: string[];
-  isFeatured: boolean;
-  isArchived: boolean;
-}
+type FormValues = z.infer<typeof productFormSchema>;
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface Color {
-  id: string;
-  name: string;
-  value: string;
-}
-
-interface Size {
-  id: string;
-  name: string;
-  value: string;
-}
-
-interface EditProductFormProps {
-  product: ProductFormValues;
-  categories: Category[];
-  colors: Color[];
-  sizes: Size[];
-}
-
-export function EditProductForm({ product, categories, colors, sizes }: EditProductFormProps) {
+export function ProductForm({ categories, colors, sizes }: ProductFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<any>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      categoryId: product.categoryId,
-      colorIds: product.colorIds,
-      sizeIds: product.sizeIds,
-      images: product.images,
-      isFeatured: product.isFeatured,
-      isArchived: product.isArchived,
+      name: '',
+      description: '',
+      price: '',
+      categoryId: '',
+      colorIds: [],
+      sizeIds: [],
+      images: [],
+      isFeatured: false,
+      isArchived: false,
     },
   });
 
-  async function onSubmit(values: any) {
+  async function onSubmit(values: FormValues) {
     setIsLoading(true);
 
     try {
-      const result = await updateProduct(product.id, values);
+      const result = await createProduct(values);
 
       if (result?.error) {
         toast.error(result.error);
-        setIsLoading(false);
       }
       router.push('/dashboard/products');
     } catch (error) {
-      toast.error('更新商品失败。请稍后重试。');
+      toast.error('创建商品失败。请稍后重试。');
+    } finally {
       setIsLoading(false);
     }
   }
@@ -322,14 +310,9 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           )}
         />
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? '更新中...' : '更新商品'}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => router.push('/dashboard/products')}>
-            取消
-          </Button>
-        </div>
+        <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+          {isLoading ? '创建中...' : '创建商品'}
+        </Button>
       </form>
     </Form>
   );

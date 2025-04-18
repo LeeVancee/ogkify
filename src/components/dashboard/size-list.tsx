@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteSize, updateSize } from '@/actions/admin';
+import { deleteSize, updateSize } from '@/actions/sizes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Pencil, Trash2, X } from 'lucide-react';

@@ -1,7 +1,7 @@
 import type React from 'react';
-import { getColors } from '@/actions/admin';
-import { ColorForm } from '../../../components/color-form';
-import { ColorList } from '../../../components/color-list';
+import { getColors } from '@/actions/colors';
+import { ColorForm } from '../../../components/dashboard/color-form';
+import { ColorList } from '../../../components/dashboard/color-list';
 
 export default async function ColorsPage() {
   const colors = await getColors();

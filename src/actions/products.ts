@@ -213,12 +213,27 @@ export async function createProduct(data: ProductFormType) {
         },
       },
     });
+  } catch (error) {
+    throw new Error('测试错误');
+  }
+}
+
+export async function deleteProduct(id: string) {
+  try {
+    // 先删除与商品相关的所有图片
+    await prisma.image.deleteMany({
+      where: { productId: id },
+    });
+
+    // 删除商品
+    await prisma.product.delete({
+      where: { id },
+    });
 
     revalidatePath('/dashboard/products');
-    redirect('/dashboard/products');
+    return { success: true, message: '商品已成功删除' };
   } catch (error) {
-    return {
-      error: '创建商品失败。请稍后重试。',
-    };
+    console.error('删除商品失败:', error);
+    return { success: false, message: '删除商品失败，请稍后重试' };
   }
 }

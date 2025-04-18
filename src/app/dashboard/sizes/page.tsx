@@ -1,7 +1,7 @@
 import type React from 'react';
-import { getSizes } from '@/actions/admin';
-import { SizeForm } from '../../../components/size-form';
-import { SizeList } from '../../../components/size-list';
+import { getSizes } from '@/actions/sizes';
+import { SizeForm } from '../../../components/dashboard/size-form';
+import { SizeList } from '../../../components/dashboard/size-list';
 
 export default async function SizesPage() {
   const sizes = await getSizes();

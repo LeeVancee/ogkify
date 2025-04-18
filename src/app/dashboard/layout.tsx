@@ -1,4 +1,4 @@
-import { EnhancedSidebar } from '@/components/enhanced-sidebar';
+import { EnhancedSidebar } from '@/components/dashboard/enhanced-sidebar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import React from 'react';

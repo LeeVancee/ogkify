@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createSize } from '@/actions/admin';
+import { createSize } from '@/actions/sizes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
