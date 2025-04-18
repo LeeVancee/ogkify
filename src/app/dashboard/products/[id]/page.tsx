@@ -3,7 +3,8 @@ import { EditProductForm } from '../../../../components/edit-product-form';
 
 import { getProduct, getCategories, getColors, getSizes } from '@/actions/product';
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const [product, categories, colors, sizes] = await Promise.all([
     getProduct(params.id),
     getCategories(),
