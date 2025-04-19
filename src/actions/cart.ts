@@ -113,7 +113,7 @@ export async function getUserCart() {
       return { items: [], totalItems: 0 };
     }
 
-    // 使用Prisma查询购物车，包括关联数据
+    // 使用Prisma一次性查询购物车，包括所有关联数据
     const cart = await prisma.cart.findFirst({
       where: {
         userId: session.user.id,
@@ -126,6 +126,8 @@ export async function getUserCart() {
                 images: true,
               },
             },
+            color: true,
+            size: true,
           },
         },
       },
@@ -135,24 +137,8 @@ export async function getUserCart() {
       return { items: [], totalItems: 0 };
     }
 
-    // 获取购物车中所有的颜色和尺寸ID
-    const colorIds = cart.items.filter((item) => item.colorId).map((item) => item.colorId as string);
-    const sizeIds = cart.items.filter((item) => item.sizeId).map((item) => item.sizeId as string);
-
-    // 批量查询颜色和尺寸信息
-    const colors = colorIds.length > 0 ? await prisma.color.findMany({ where: { id: { in: colorIds } } }) : [];
-
-    const sizes = sizeIds.length > 0 ? await prisma.size.findMany({ where: { id: { in: sizeIds } } }) : [];
-
-    // 构建查找映射，便于快速查找
-    const colorMap = new Map(colors.map((color) => [color.id, color]));
-    const sizeMap = new Map(sizes.map((size) => [size.id, size]));
-
-    // 格式化购物车数据，添加颜色和尺寸信息
+    // 格式化购物车数据
     const formattedItems = cart.items.map((item) => {
-      const color = item.colorId ? colorMap.get(item.colorId) : null;
-      const size = item.sizeId ? sizeMap.get(item.sizeId) : null;
-
       return {
         id: item.id,
         productId: item.productId,
@@ -161,11 +147,11 @@ export async function getUserCart() {
         quantity: item.quantity,
         image: item.product.images[0]?.url || '/placeholder.svg',
         colorId: item.colorId,
-        colorName: color?.name || null,
-        colorValue: color?.value || null,
+        colorName: item.color?.name || null,
+        colorValue: item.color?.value || null,
         sizeId: item.sizeId,
-        sizeName: size?.name || null,
-        sizeValue: size?.value || null,
+        sizeName: item.size?.name || null,
+        sizeValue: item.size?.value || null,
       };
     });
 

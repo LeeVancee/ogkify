@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
+import { CheckoutButton } from '@/components/shop/cart/checkout-button';
 
 export default async function CartPage() {
   const { items, totalItems } = await getUserCart();
@@ -56,7 +57,7 @@ export default async function CartPage() {
                 <span>{formatPrice(total)}</span>
               </div>
             </div>
-            <Button className="w-full">结算</Button>
+            <CheckoutButton />
             <div className="mt-4 text-center text-xs text-muted-foreground">税费将在结算时计算</div>
           </div>
         </div>

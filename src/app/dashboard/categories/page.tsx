@@ -1,6 +1,5 @@
 import type React from 'react';
 import { getCategories } from '@/actions/categories';
-import { CategoryForm } from '../../../components/dashboard/category-form';
 import { CategoryList } from '../../../components/dashboard/category-list';
 
 export default async function CategoriesPage() {
