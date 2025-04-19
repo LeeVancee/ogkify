@@ -13,6 +13,7 @@ datasource db {
 model Category {
   id        String    @id @default(cuid())
   name      String
+  imageUrl  String? // 新增图片URL字段
   products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

@@ -4,26 +4,50 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Search, Menu, User } from 'lucide-react';
-import { useCart } from '@/components/shop/cart/cart-context';
+import { ShoppingCart, Search, Menu } from 'lucide-react';
 import { CartSheet } from '@/components/shop/cart/cart-sheet';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { DropDown } from '../DropDown';
+import { getUserCart } from '@/actions/cart';
 
 const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'Products', href: '/products' },
-  { name: 'Categories', href: '/categories' },
-  { name: 'About', href: '/about' },
-  { name: 'Contact', href: '/contact' },
+  { name: '首页', href: '/' },
+  { name: '商品', href: '/products' },
+  { name: '分类', href: '/categories' },
+  { name: '关于我们', href: '/about' },
+  { name: '联系我们', href: '/contact' },
 ];
 
 export default function Header() {
   const pathname = usePathname();
-  const { totalItems } = useCart();
+  const [cartItemCount, setCartItemCount] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // 获取购物车数据
+  useEffect(() => {
+    const fetchCartData = async () => {
+      try {
+        const { totalItems } = await getUserCart();
+        setCartItemCount(totalItems);
+      } catch (error) {
+        console.error('获取购物车数据失败:', error);
+      }
+    };
+
+    fetchCartData();
+
+    // 添加事件监听器，当页面获得焦点时刷新购物车数据
+    const handleFocus = () => {
+      fetchCartData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
@@ -54,7 +78,7 @@ export default function Header() {
         </Sheet>
 
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <span className="text-xl font-bold">NextShop</span>
+          <span className="text-xl font-bold">电商系统</span>
         </Link>
 
         <nav className="hidden md:flex md:gap-6 lg:gap-10">
@@ -78,7 +102,7 @@ export default function Header() {
               <Input
                 type="search"
                 name="q"
-                placeholder="Search products..."
+                placeholder="搜索商品..."
                 className="w-full md:w-[200px] lg:w-[300px]"
                 autoFocus
                 onBlur={() => setIsSearchOpen(false)}
@@ -87,7 +111,7 @@ export default function Header() {
           ) : (
             <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
               <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
+              <span className="sr-only">搜索</span>
             </Button>
           )}
 
@@ -96,12 +120,12 @@ export default function Header() {
           <CartSheet>
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
-              {totalItems > 0 && (
+              {cartItemCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                  {totalItems}
+                  {cartItemCount}
                 </span>
               )}
-              <span className="sr-only">Open cart</span>
+              <span className="sr-only">打开购物车</span>
             </Button>
           </CartSheet>
         </div>

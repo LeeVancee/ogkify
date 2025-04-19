@@ -6,14 +6,22 @@ import { revalidatePath } from 'next/cache';
 export async function getSizes() {
   try {
     const sizes = await prisma.size.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, value: true },
+      orderBy: {
+        name: 'asc',
+      },
     });
-    return sizes;
+
+    return sizes.map((size) => ({
+      id: size.id,
+      name: size.name,
+      value: size.value,
+    }));
   } catch (error) {
+    console.error('获取尺寸失败:', error);
     return [];
   }
 }
+
 export async function createSize(data: { name: string; value: string }) {
   try {
     const size = await prisma.size.create({

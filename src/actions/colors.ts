@@ -6,14 +6,22 @@ import { revalidatePath } from 'next/cache';
 export async function getColors() {
   try {
     const colors = await prisma.color.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, value: true },
+      orderBy: {
+        name: 'asc',
+      },
     });
-    return colors;
+
+    return colors.map((color) => ({
+      id: color.id,
+      name: color.name,
+      value: color.value,
+    }));
   } catch (error) {
+    console.error('获取颜色失败:', error);
     return [];
   }
 }
+
 export async function createColor(data: { name: string; value: string }) {
   try {
     const color = await prisma.color.create({

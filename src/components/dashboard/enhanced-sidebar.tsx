@@ -45,19 +45,46 @@ const emsNavigation = [
     title: '分类管理',
     url: '/dashboard/categories',
     icon: Grid,
-    items: [],
+    items: [
+      {
+        title: '所有分类',
+        url: '/dashboard/categories',
+      },
+      {
+        title: '添加分类',
+        url: '/dashboard/categories/new',
+      },
+    ],
   },
   {
     title: '颜色管理',
     url: '/dashboard/colors',
     icon: Palette,
-    items: [],
+    items: [
+      {
+        title: '所有颜色',
+        url: '/dashboard/colors',
+      },
+      {
+        title: '添加颜色',
+        url: '/dashboard/colors/new',
+      },
+    ],
   },
   {
     title: '尺寸管理',
     url: '/dashboard/sizes',
     icon: Ruler,
-    items: [],
+    items: [
+      {
+        title: '所有尺寸',
+        url: '/dashboard/sizes',
+      },
+      {
+        title: '添加尺寸',
+        url: '/dashboard/sizes/new',
+      },
+    ],
   },
   {
     title: '商品管理',

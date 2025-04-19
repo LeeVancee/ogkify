@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteSize, updateSize } from '@/actions/sizes';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { deleteSize } from '@/actions/sizes';
 import { toast } from 'sonner';
+import { SizeCard } from './size-card';
+import { Search, X, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type Size = {
   id: string;
@@ -19,13 +21,15 @@ interface SizeListProps {
 
 export function SizeList({ initialSizes }: SizeListProps) {
   const [sizes, setSizes] = useState<Size[]>(initialSizes);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const [editingValue, setEditingValue] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredSizes = sizes.filter(
+    (size) =>
+      size.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      size.value.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   async function handleDelete(id: string) {
-    if (!confirm('确定要删除这个尺寸吗？')) return;
-
     try {
       const result = await deleteSize(id);
       if (result.success) {
@@ -39,84 +43,55 @@ export function SizeList({ initialSizes }: SizeListProps) {
     }
   }
 
-  async function handleUpdate(id: string) {
-    if (!editingName.trim() || !editingValue.trim()) {
-      toast.error('请填写完整信息');
-      return;
-    }
-
-    try {
-      const result = await updateSize(id, { name: editingName, value: editingValue });
-      if (result.success) {
-        toast.success('更新成功');
-        setSizes(sizes.map((s) => (s.id === id ? { ...s, name: editingName, value: editingValue } : s)));
-        setEditingId(null);
-      } else {
-        toast.error(result.error);
-      }
-    } catch (error) {
-      toast.error('更新失败');
-    }
-  }
-
-  function startEditing(size: Size) {
-    setEditingId(size.id);
-    setEditingName(size.name);
-    setEditingValue(size.value);
-  }
-
-  if (sizes.length === 0) {
-    return <div className="text-center text-muted-foreground">暂无尺寸</div>;
-  }
-
   return (
     <div className="space-y-4">
-      {sizes.map((size) => (
-        <div key={size.id} className="flex items-center justify-between rounded-lg border p-4">
-          {editingId === size.id ? (
-            <div className="flex flex-1 items-center gap-2">
-              <Input
-                value={editingName}
-                onChange={(e) => setEditingName(e.target.value)}
-                placeholder="尺寸名称"
-                className="max-w-[150px]"
-              />
-              <Input
-                value={editingValue}
-                onChange={(e) => setEditingValue(e.target.value)}
-                placeholder="尺寸值"
-                className="max-w-[100px]"
-              />
-              <Button size="sm" onClick={() => handleUpdate(size.id)}>
-                保存
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div>
-                <div className="font-medium">{size.name}</div>
-                <div className="text-sm text-muted-foreground">值: {size.value}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => startEditing(size)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(size.id)}
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="搜索尺寸..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-9 w-9"
+              onClick={() => setSearchQuery('')}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">清除搜索</span>
+            </Button>
           )}
         </div>
-      ))}
+        <Button asChild>
+          <Link href="/dashboard/sizes/new">
+            <Plus className="mr-2 h-4 w-4" />
+            添加尺寸
+          </Link>
+        </Button>
+      </div>
+
+      {filteredSizes.length === 0 ? (
+        <div className="flex h-[400px] flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
+          <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
+            <h3 className="mt-4 text-lg font-semibold">未找到尺寸</h3>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground">
+              {searchQuery
+                ? '没有与您的搜索条件匹配的尺寸。请尝试使用不同的搜索词。'
+                : '您尚未添加任何尺寸。点击上方按钮添加尺寸。'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredSizes.map((size) => (
+            <SizeCard key={size.id} size={size} onDelete={handleDelete} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

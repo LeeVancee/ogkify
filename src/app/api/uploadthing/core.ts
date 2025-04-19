@@ -38,6 +38,15 @@ export const ourFileRouter = {
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };
     }),
+
+  categoryImage: f({ image: { maxFileSize: '4MB', maxFileCount: 1 } })
+    .middleware(async () => {
+      return { uploadedBy: 'admin' };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('上传文件:', file.url, metadata);
+      return { uploadedBy: metadata.uploadedBy };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

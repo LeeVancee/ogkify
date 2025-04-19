@@ -1,52 +1,46 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Image from "next/image"
-import { cn } from "@/lib/utils"
+import { useState } from 'react';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 interface ProductGalleryProps {
-  images: string[]
+  images: string[];
 }
 
 export function ProductGallery({ images }: ProductGalleryProps) {
-  const [selectedImage, setSelectedImage] = useState(0)
-
-  // If no images are provided, use a placeholder
-  const displayImages = images.length > 0 ? images : ["/placeholder.svg?height=600&width=600"]
+  const [mainImage, setMainImage] = useState(images[0] || '/placeholder.svg');
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="overflow-hidden rounded-lg bg-muted">
-        <Image
-          src={displayImages[selectedImage] || "/placeholder.svg"}
-          alt="Product image"
-          width={600}
-          height={600}
-          className="h-full w-full object-cover"
-        />
+    <div className="grid gap-4">
+      <div className="overflow-hidden rounded-lg border bg-muted">
+        <div className="relative aspect-square">
+          <Image
+            src={mainImage}
+            alt="Product image"
+            fill
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="object-cover"
+            priority
+          />
+        </div>
       </div>
-
-      {displayImages.length > 1 && (
-        <div className="flex gap-4 overflow-auto pb-2">
-          {displayImages.map((image, index) => (
+      {images.length > 1 && (
+        <div className="flex items-center gap-2 overflow-auto pb-2">
+          {images.map((image, index) => (
             <button
               key={index}
               className={cn(
-                "relative h-20 w-20 cursor-pointer overflow-hidden rounded-lg bg-muted",
-                selectedImage === index && "ring-2 ring-primary ring-offset-2",
+                'relative h-20 w-20 overflow-hidden rounded-lg border bg-muted',
+                mainImage === image && 'ring-2 ring-primary ring-offset-2'
               )}
-              onClick={() => setSelectedImage(index)}
+              onClick={() => setMainImage(image)}
             >
-              <Image
-                src={image || "/placeholder.svg"}
-                alt={`Product thumbnail ${index + 1}`}
-                fill
-                className="object-cover"
-              />
+              <Image src={image} alt={`Product image ${index + 1}`} fill sizes="80px" className="object-cover" />
             </button>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export function HeroSection() {
   return (
@@ -26,16 +26,10 @@ export function HeroSection() {
             </div>
           </div>
           <div className="relative aspect-video overflow-hidden rounded-xl lg:aspect-square">
-            <Image
-              src="/placeholder.svg?height=800&width=800"
-              alt="Hero Image"
-              fill
-              className="object-cover"
-              priority
-            />
+            <Image src="/billboard.webp" alt="Hero Image" fill className="object-cover" priority />
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

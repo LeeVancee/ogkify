@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface ContainerProps {
   children: React.ReactNode;
@@ -6,7 +7,7 @@ interface ContainerProps {
 }
 
 const Container = ({ children, className }: ContainerProps) => {
-  return <div className={`mx-auto max-w-(--breakpoint-xl) ${className}`}>{children}</div>;
+  return <div className={cn('mx-auto max-w-[1440px]', className)}>{children}</div>;
 };
 
 export default Container;

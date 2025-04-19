@@ -7,21 +7,36 @@ export async function getCategories() {
   try {
     const categories = await prisma.category.findMany({
       orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+      },
     });
     return categories;
   } catch (error) {
     return [];
   }
 }
-export async function createCategory(name: string) {
+
+interface CreateCategoryInput {
+  name: string;
+  imageUrl: string;
+}
+
+export async function createCategory(input: CreateCategoryInput) {
   try {
     const category = await prisma.category.create({
-      data: { name },
+      data: {
+        name: input.name,
+        imageUrl: input.imageUrl,
+      },
     });
+
     revalidatePath('/dashboard/categories');
     return { success: true, data: category };
   } catch (error) {
+    console.error('创建分类失败:', error);
     return { success: false, error: '创建分类失败' };
   }
 }

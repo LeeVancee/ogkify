@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteCategory, updateCategory } from '@/actions/categories';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { deleteCategory } from '@/actions/categories';
 import { toast } from 'sonner';
+import { CategoryCard } from './category-card';
+import { Search, X, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type Category = {
   id: string;
   name: string;
+  imageUrl?: string | null;
 };
 
 interface CategoryListProps {
@@ -18,12 +21,15 @@ interface CategoryListProps {
 
 export function CategoryList({ initialCategories }: CategoryListProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      category.imageUrl?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   async function handleDelete(id: string) {
-    if (!confirm('确定要删除这个分类吗？')) return;
-
     try {
       const result = await deleteCategory(id);
       if (result.success) {
@@ -37,69 +43,55 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
     }
   }
 
-  async function handleUpdate(id: string) {
-    if (!editingName.trim()) {
-      toast.error('请输入分类名称');
-      return;
-    }
-
-    try {
-      const result = await updateCategory(id, editingName);
-      if (result.success) {
-        toast.success('更新成功');
-        setCategories(categories.map((c) => (c.id === id ? { ...c, name: editingName } : c)));
-        setEditingId(null);
-      } else {
-        toast.error(result.error);
-      }
-    } catch (error) {
-      toast.error('更新失败');
-    }
-  }
-
-  function startEditing(category: Category) {
-    setEditingId(category.id);
-    setEditingName(category.name);
-  }
-
-  if (categories.length === 0) {
-    return <div className="text-center text-muted-foreground">暂无分类</div>;
-  }
-
   return (
     <div className="space-y-4">
-      {categories.map((category) => (
-        <div key={category.id} className="flex items-center justify-between rounded-lg border p-4">
-          {editingId === category.id ? (
-            <div className="flex flex-1 items-center gap-2">
-              <Input value={editingName} onChange={(e) => setEditingName(e.target.value)} className="max-w-[200px]" />
-              <Button size="sm" onClick={() => handleUpdate(category.id)}>
-                保存
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="font-medium">{category.name}</div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => startEditing(category)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(category.id)}
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="搜索分类..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-9 w-9"
+              onClick={() => setSearchQuery('')}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">清除搜索</span>
+            </Button>
           )}
         </div>
-      ))}
+        <Button asChild>
+          <Link href="/dashboard/categories/new">
+            <Plus className="mr-2 h-4 w-4" />
+            添加分类
+          </Link>
+        </Button>
+      </div>
+
+      {filteredCategories.length === 0 ? (
+        <div className="flex h-[400px] flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
+          <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
+            <h3 className="mt-4 text-lg font-semibold">未找到分类</h3>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground">
+              {searchQuery
+                ? '没有与您的搜索条件匹配的分类。请尝试使用不同的搜索词。'
+                : '您尚未添加任何分类。点击上方按钮添加分类。'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredCategories.map((category) => (
+            <CategoryCard key={category.id} category={category} onDelete={handleDelete} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

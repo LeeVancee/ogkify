@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DeleteProductDialog } from './delete-product-dialog';
 import { ProductCard } from './product-card';
+import { DeleteDialog } from './delete-dialog';
+import { deleteProduct } from '@/actions/products';
+import { toast } from 'sonner';
 
 // 定义产品类型
 interface Product {
@@ -49,9 +51,30 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
     setDeleteDialogOpen(true);
   };
 
+  const handleDelete = async () => {
+    if (!productToDelete) return;
+
+    try {
+      const result = await deleteProduct(productToDelete);
+      if (result.success) {
+        setProducts(products.filter((p) => p.id !== productToDelete));
+        toast.success('商品删除成功');
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error('删除失败');
+    } finally {
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
+    }
+  };
+
   const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
+
+  const productToDeleteData = productToDelete ? products.find((p) => p.id === productToDelete) : null;
 
   return (
     <div className="space-y-4">
@@ -211,7 +234,12 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
         </div>
       )}
 
-      <DeleteProductDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} productId={productToDelete} />
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        title={`确定要删除商品"${productToDeleteData?.name}"吗？`}
+      />
     </div>
   );
 }
