@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Facebook, Instagram, Twitter } from "lucide-react"
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Facebook, Instagram, Twitter } from 'lucide-react';
 
 export default function Footer() {
   return (
     <footer className="border-t bg-background">
-      <div className="container px-4 py-12 md:px-6">
+      <div className=" px-4 py-12 md:px-6">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center space-x-2">
@@ -84,5 +84,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

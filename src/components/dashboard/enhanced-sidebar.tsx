@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
@@ -21,6 +22,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { ActiveLink } from './active-link';
 import { NavMain } from './nav-main';
+import { NavUser } from './nav-user';
 
 // Navigation item type definition
 interface NavItem {
@@ -117,6 +119,9 @@ export function EnhancedSidebar({ ...props }: React.ComponentProps<typeof Sideba
       <SidebarContent>
         <NavMain items={emsNavigation} />
       </SidebarContent>
+      <SidebarFooter>
+        <NavUser />
+      </SidebarFooter>
     </Sidebar>
   );
 }

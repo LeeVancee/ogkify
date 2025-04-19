@@ -10,6 +10,7 @@ import { CartSheet } from '@/components/shop/cart/cart-sheet';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { DropDown } from '../DropDown';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -26,7 +27,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container flex h-16 items-center px-4 md:px-6">
+      <div className="px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between max-w-7xl mx-auto">
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="md:hidden">
@@ -90,12 +91,7 @@ export default function Header() {
             </Button>
           )}
 
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/account">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Account</span>
-            </Link>
-          </Button>
+          <DropDown />
 
           <CartSheet>
             <Button variant="ghost" size="icon" className="relative">
