@@ -605,4 +605,6 @@ export async function deleteUnpaidOrder(orderId: string) {
     return { success: true, message: 'Order deleted successfully' };
   } catch (error) {
     console.error('删除订单失败:', error);
+    return { success: false, error: 'Failed to delete order' };
   }
+}
