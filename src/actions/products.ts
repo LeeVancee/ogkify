@@ -113,9 +113,6 @@ export async function updateProduct(id: string, data: ProductFormType) {
         },
       },
     });
-
-    revalidatePath('/dashboard/products');
-    redirect('/dashboard/products');
   } catch (error) {
     return {
       error: '更新商品失败。请稍后重试。',

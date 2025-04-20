@@ -54,8 +54,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
 
   // 计算总价
   const subtotal = cartData.items.reduce((total, item) => total + item.price * item.quantity, 0);
-  const shipping = subtotal > 200 ? 0 : 20; // 满200元免运费
-  const total = subtotal + shipping;
+
   const isEmpty = cartData.items.length === 0;
 
   return (
@@ -98,13 +97,10 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                   <span className="text-muted-foreground">商品小计</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">运费</span>
-                  <span>{shipping === 0 ? '免费' : formatPrice(shipping)}</span>
-                </div>
+
                 <div className="flex items-center justify-between font-medium">
                   <span>总计</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
               </div>
 

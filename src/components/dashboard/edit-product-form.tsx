@@ -109,6 +109,7 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
         toast.error(result.error);
         setIsLoading(false);
       }
+      toast.success('商品更新成功!');
       router.push('/dashboard/products');
     } catch (error) {
       toast.error('更新商品失败。请稍后重试。');

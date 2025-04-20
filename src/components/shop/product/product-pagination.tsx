@@ -3,13 +3,14 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Suspense } from 'react';
 
 interface ProductPaginationProps {
   currentPage: number;
   totalPages: number;
 }
 
-export function ProductPagination({ currentPage, totalPages }: ProductPaginationProps) {
+function ProductPaginationContent({ currentPage, totalPages }: ProductPaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -80,5 +81,27 @@ export function ProductPagination({ currentPage, totalPages }: ProductPagination
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
+  );
+}
+
+export function ProductPagination(props: ProductPaginationProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center gap-1 mt-8">
+          <Button variant="outline" size="icon" disabled>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" disabled>
+            ...
+          </Button>
+          <Button variant="outline" size="icon" disabled>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      }
+    >
+      <ProductPaginationContent {...props} />
+    </Suspense>
   );
 }

@@ -12,7 +12,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 });
 
 // 货币格式化函数，转换为 Stripe 使用的最小单位（例如，将元转换为分）
-export function formatAmountForStripe(amount: number, currency: string = 'cny'): number {
+export function formatAmountForStripe(amount: number, currency: string = 'usd'): number {
   const currencies: Record<string, number> = {
     usd: 100, // $1.00 = 100 cents
     eur: 100, // €1.00 = 100 cents
@@ -25,7 +25,7 @@ export function formatAmountForStripe(amount: number, currency: string = 'cny'):
 }
 
 // 从 Stripe 最小单位转换回普通金额
-export function formatAmountFromStripe(amount: number, currency: string = 'cny'): number {
+export function formatAmountFromStripe(amount: number, currency: string = 'usd'): number {
   const currencies: Record<string, number> = {
     usd: 100,
     eur: 100,

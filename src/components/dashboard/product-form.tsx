@@ -96,6 +96,7 @@ export function ProductForm({ categories, colors, sizes }: ProductFormProps) {
       if (result?.error) {
         toast.error(result.error);
       }
+      toast.success('商品创建成功!');
       router.push('/dashboard/products');
     } catch (error) {
       toast.error('创建商品失败。请稍后重试。');

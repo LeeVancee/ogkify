@@ -106,20 +106,7 @@ const emsNavigation = [
     title: '订单管理',
     url: '/dashboard/orders',
     icon: ShoppingCart,
-    items: [
-      {
-        title: '所有订单',
-        url: '/dashboard/orders',
-      },
-      {
-        title: '待处理',
-        url: '/dashboard/orders/pending',
-      },
-      {
-        title: '已完成',
-        url: '/dashboard/orders/completed',
-      },
-    ],
+    items: [],
   },
 ];
 
@@ -135,7 +122,7 @@ export function EnhancedSidebar({ ...props }: React.ComponentProps<typeof Sideba
                   <ShoppingBag className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">电商管理系统</span>
+                  <span className="font-semibold">OGK</span>
                   <span className="">v1.0.0</span>
                 </div>
               </ActiveLink>

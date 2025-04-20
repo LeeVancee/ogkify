@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import { stripe, formatAmountFromStripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
 
@@ -80,6 +80,9 @@ export async function POST(req: NextRequest) {
             });
           }
         }
+
+        const amountShipping = formatAmountFromStripe(session.shipping_cost?.amount_total || 0, 'usd');
+        const amount = formatAmountFromStripe(session.amount_total || 0, 'usd');
 
         break;
       }

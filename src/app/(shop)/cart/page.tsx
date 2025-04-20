@@ -1,6 +1,5 @@
 import { getUserCart } from '@/actions/cart';
 import { CartItem } from '@/components/shop/cart/cart-item';
-import { CartSummary } from '@/components/shop/cart/cart-summary';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
@@ -13,8 +12,6 @@ export default async function CartPage() {
 
   // 计算总价
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
-  const shipping = subtotal > 200 ? 0 : 20; // 满200元免运费
-  const total = subtotal + shipping;
 
   if (isEmpty) {
     return (
@@ -47,18 +44,14 @@ export default async function CartPage() {
               <span className="text-muted-foreground">商品小计（{totalItems}件）</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">运费</span>
-              <span>{shipping === 0 ? '免费' : formatPrice(shipping)}</span>
-            </div>
+
             <div className="my-4 border-t pt-4">
               <div className="flex justify-between font-medium">
                 <span>订单总计</span>
-                <span>{formatPrice(total)}</span>
+                <span>{formatPrice(subtotal)}</span>
               </div>
             </div>
             <CheckoutButton />
-            <div className="mt-4 text-center text-xs text-muted-foreground">税费将在结算时计算</div>
           </div>
         </div>
       </div>

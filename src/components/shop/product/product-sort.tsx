@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Suspense } from 'react';
 
 const sortOptions = [
   { value: 'newest', label: '最新上架' },
@@ -10,7 +11,7 @@ const sortOptions = [
   { value: 'price-desc', label: '价格: 从高到低' },
 ];
 
-export function ProductSort() {
+function ProductSortContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentSort = searchParams.get('sort') || 'newest';
@@ -53,5 +54,24 @@ export function ProductSort() {
         </SelectContent>
       </Select>
     </div>
+  );
+}
+
+export function ProductSort() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center gap-2">
+          <Label htmlFor="sort-select" className="text-sm font-medium">
+            排序方式:
+          </Label>
+          <div className="w-[180px] h-9 rounded-md border bg-background px-3 py-2 animate-pulse">
+            <span className="text-sm text-muted-foreground">加载中...</span>
+          </div>
+        </div>
+      }
+    >
+      <ProductSortContent />
+    </Suspense>
   );
 }

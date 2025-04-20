@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Loader2 } from 'lucide-react';
@@ -16,7 +16,7 @@ interface OrderData {
   phone: string | null;
 }
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const [isVerifying, setIsVerifying] = useState(true);
   const [orderData, setOrderData] = useState<OrderData | null>(null);
@@ -81,47 +81,64 @@ export default function CheckoutSuccessPage() {
   }
 
   return (
-    <div className="container flex flex-col items-center justify-center py-16">
-      <CheckCircle className="mb-4 h-16 w-16 text-green-500" />
-      <h1 className="mb-2 text-2xl font-bold">订单确认</h1>
-      <p className="mb-6 text-center text-muted-foreground">感谢您的购买！您的订单已成功处理。</p>
+    <>
+      <div className="container flex flex-col items-center justify-center py-16">
+        <CheckCircle className="mb-4 h-16 w-16 text-green-500" />
+        <h1 className="mb-2 text-2xl font-bold">订单确认</h1>
+        <p className="mb-6 text-center text-muted-foreground">感谢您的购买！您的订单已成功处理。</p>
 
-      <div className="mb-8 w-full max-w-md rounded-lg border bg-card p-6">
-        <div className="mb-4">
-          <p className="mb-1 text-sm text-muted-foreground">订单号:</p>
-          <p className="text-xl font-semibold">{orderData.orderNumber}</p>
+        <div className="mb-8 w-full max-w-md rounded-lg border bg-card p-6">
+          <div className="mb-4">
+            <p className="mb-1 text-sm text-muted-foreground">订单号:</p>
+            <p className="text-xl font-semibold">{orderData.orderNumber}</p>
+          </div>
+
+          {orderData.shippingAddress && (
+            <div className="mb-4">
+              <p className="mb-1 text-sm text-muted-foreground">送货地址:</p>
+              <p className="text-sm">{orderData.shippingAddress}</p>
+            </div>
+          )}
+
+          {orderData.phone && (
+            <div className="mb-4">
+              <p className="mb-1 text-sm text-muted-foreground">联系电话:</p>
+              <p className="text-sm">{orderData.phone}</p>
+            </div>
+          )}
+
+          <div>
+            <p className="mb-1 text-sm text-muted-foreground">订单状态:</p>
+            <div className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+              已支付
+            </div>
+          </div>
         </div>
 
-        {orderData.shippingAddress && (
-          <div className="mb-4">
-            <p className="mb-1 text-sm text-muted-foreground">送货地址:</p>
-            <p className="text-sm">{orderData.shippingAddress}</p>
-          </div>
-        )}
-
-        {orderData.phone && (
-          <div className="mb-4">
-            <p className="mb-1 text-sm text-muted-foreground">联系电话:</p>
-            <p className="text-sm">{orderData.phone}</p>
-          </div>
-        )}
-
-        <div>
-          <p className="mb-1 text-sm text-muted-foreground">订单状态:</p>
-          <div className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-            已支付
-          </div>
+        <div className="flex gap-4">
+          <Button asChild variant="outline">
+            <Link href="/products">继续购物</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/myorders">查看我的订单</Link>
+          </Button>
         </div>
       </div>
+    </>
+  );
+}
 
-      <div className="flex gap-4">
-        <Button asChild variant="outline">
-          <Link href="/products">继续购物</Link>
-        </Button>
-        <Button asChild>
-          <Link href="/myorders">查看我的订单</Link>
-        </Button>
-      </div>
-    </div>
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container flex flex-col items-center justify-center py-16">
+          <Loader2 className="mb-4 h-16 w-16 animate-spin text-primary" />
+          <h1 className="mb-2 text-2xl font-bold">正在加载...</h1>
+        </div>
+      }
+    >
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

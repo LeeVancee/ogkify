@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Slider } from '@/components/ui/slider';
 import type { Category } from '@/lib/types';
+import { Suspense } from 'react';
 
 interface ProductFiltersProps {
   categories: Category[];
@@ -17,7 +18,7 @@ interface ProductFiltersProps {
   maxPrice?: number;
 }
 
-export function ProductFilters({ categories, colors = [], sizes = [], maxPrice = 5000 }: ProductFiltersProps) {
+function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice = 5000 }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -234,5 +235,36 @@ export function ProductFilters({ categories, colors = [], sizes = [], maxPrice =
         清除筛选
       </Button>
     </div>
+  );
+}
+
+export function ProductFilters(props: ProductFiltersProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="grid gap-6">
+          <Accordion type="multiple" defaultValue={['categories', 'featured', 'price']}>
+            <AccordionItem value="categories">
+              <AccordionTrigger>分类</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-2">
+                  <div className="h-4 w-full rounded-md bg-muted animate-pulse" />
+                  <div className="h-4 w-full rounded-md bg-muted animate-pulse" />
+                  <div className="h-4 w-full rounded-md bg-muted animate-pulse" />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="price">
+              <AccordionTrigger>价格范围</AccordionTrigger>
+              <AccordionContent>
+                <div className="h-4 w-full rounded-md bg-muted animate-pulse mt-4" />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      }
+    >
+      <ProductFiltersContent {...props} />
+    </Suspense>
   );
 }

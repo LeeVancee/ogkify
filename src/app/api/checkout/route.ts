@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
       return {
         price_data: {
-          currency: 'cny',
+          currency: 'usd',
           product_data: {
             name: productName,
             description: variantInfo ? `${variantInfo}` : undefined,
