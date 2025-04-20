@@ -10,12 +10,10 @@ import { OrderStatus } from '@prisma/client';
 export async function getUserOrders() {
   try {
     const session = await getSession();
-
     if (!session?.user?.id) {
-      return { error: '未授权', success: false, orders: [] };
+      return { success: false, orders: [] };
     }
 
-    // 查询用户的所有订单，按创建时间倒序排列
     const orders = await prisma.order.findMany({
       where: {
         userId: session.user.id,
@@ -39,71 +37,44 @@ export async function getUserOrders() {
       },
     });
 
-    // 格式化订单数据，添加更多可读信息
-    const formattedOrders = orders.map((order) => {
-      // 计算总商品数量
-      const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    // 转换为前端友好的格式
+    const formattedOrders = orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customer: order.user?.name,
+      email: order.user?.email,
+      createdAt: order.createdAt.toISOString(),
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      totalAmount: order.totalAmount,
+      totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
+      firstItemImage: order.items[0]?.product?.images[0]?.url || null,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.product.name,
+        quantity: item.quantity,
+        price: item.price,
+        imageUrl: item.product.images[0]?.url || null,
+        color: item.color
+          ? {
+              name: item.color.name,
+              value: item.color.value,
+            }
+          : null,
+        size: item.size
+          ? {
+              name: item.size.name,
+              value: item.size.value,
+            }
+          : null,
+      })),
+    }));
 
-      // 获取第一个商品的图片URL作为订单缩略图
-      const firstItemImage = order.items[0]?.product.images[0]?.url || null;
-
-      return {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        customer: order.user.name,
-        email: order.user.email,
-        createdAt: order.createdAt.toISOString(),
-        createdAtFormatted: new Date(order.createdAt).toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        totalAmount: order.totalAmount,
-        totalAmountFormatted: formatPrice(order.totalAmount),
-        totalItems,
-        shippingAddress: order.shippingAddress,
-        phone: order.phone,
-        items: order.items.map((item) => ({
-          id: item.id,
-          productId: item.productId,
-          productName: item.product.name,
-          quantity: item.quantity,
-          price: item.price,
-          priceFormatted: formatPrice(item.price),
-          totalPrice: item.price * item.quantity,
-          totalPriceFormatted: formatPrice(item.price * item.quantity),
-          imageUrl: item.product.images[0]?.url || null,
-          color: item.color
-            ? {
-                name: item.color.name,
-                value: item.color.value,
-              }
-            : null,
-          size: item.size
-            ? {
-                name: item.size.name,
-                value: item.size.value,
-              }
-            : null,
-        })),
-        firstItemImage,
-        user: {
-          id: order.user.id,
-          name: order.user.name,
-          email: order.user.email,
-        },
-      };
-    });
-
-    return {
-      success: true,
-      orders: formattedOrders,
-    };
+    return { success: true, orders: formattedOrders };
   } catch (error) {
     console.error('获取订单失败:', error);
-    return { error: '获取订单失败', success: false, orders: [] };
+    return { success: false, orders: [] };
   }
 }
 
@@ -227,12 +198,10 @@ function getPaymentStatusText(status: string): string {
 export async function getUnpaidOrders() {
   try {
     const session = await getSession();
-
     if (!session?.user?.id) {
-      return { error: '未授权', success: false, orders: [] };
+      return { success: false, orders: [] };
     }
 
-    // 查询用户的未支付订单
     const orders = await prisma.order.findMany({
       where: {
         userId: session.user.id,
@@ -256,61 +225,41 @@ export async function getUnpaidOrders() {
       },
     });
 
-    // 使用与getUserOrders相同的格式化逻辑
-    const formattedOrders = orders.map((order) => {
-      const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
-      const firstItemImage = order.items[0]?.product.images[0]?.url || null;
+    // 使用相同的转换逻辑
+    const formattedOrders = orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      createdAt: order.createdAt.toISOString(),
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      totalAmount: order.totalAmount,
+      firstItemImage: order.items[0]?.product?.images[0]?.url || null,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.product.name,
+        quantity: item.quantity,
+        price: item.price,
+        imageUrl: item.product.images[0]?.url || null,
+        color: item.color
+          ? {
+              name: item.color.name,
+              value: item.color.value,
+            }
+          : null,
+        size: item.size
+          ? {
+              name: item.size.name,
+              value: item.size.value,
+            }
+          : null,
+      })),
+    }));
 
-      return {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        createdAt: order.createdAt.toISOString(),
-        createdAtFormatted: new Date(order.createdAt).toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        totalAmount: order.totalAmount,
-        totalAmountFormatted: formatPrice(order.totalAmount),
-        totalItems,
-        shippingAddress: order.shippingAddress,
-        phone: order.phone,
-        items: order.items.map((item) => ({
-          id: item.id,
-          productId: item.productId,
-          productName: item.product.name,
-          quantity: item.quantity,
-          price: item.price,
-          priceFormatted: formatPrice(item.price),
-          totalPrice: item.price * item.quantity,
-          totalPriceFormatted: formatPrice(item.price * item.quantity),
-          imageUrl: item.product.images[0]?.url || null,
-          color: item.color
-            ? {
-                name: item.color.name,
-                value: item.color.value,
-              }
-            : null,
-          size: item.size
-            ? {
-                name: item.size.name,
-                value: item.size.value,
-              }
-            : null,
-        })),
-        firstItemImage,
-      };
-    });
-
-    return {
-      success: true,
-      orders: formattedOrders,
-    };
+    return { success: true, orders: formattedOrders };
   } catch (error) {
     console.error('获取未支付订单失败:', error);
-    return { error: '获取未支付订单失败', success: false, orders: [] };
+    return { success: false, orders: [] };
   }
 }
 
@@ -465,5 +414,154 @@ export async function updateOrderStatus(orderId: string, status: string) {
   } catch (error) {
     console.error('更新订单状态失败:', error);
     return { error: '更新订单状态失败', success: false };
+  }
+}
+
+export async function getOrdersStats() {
+  try {
+    // 获取待处理订单数量
+    const pendingOrders = await prisma.order.count({
+      where: {
+        status: 'PENDING',
+      },
+    });
+
+    // 获取已完成订单数量
+    const completedOrders = await prisma.order.count({
+      where: {
+        status: 'COMPLETED',
+      },
+    });
+
+    // 获取总收入 (仅计算已支付订单)
+    const paidOrders = await prisma.order.findMany({
+      where: {
+        paymentStatus: 'PAID',
+      },
+      select: {
+        totalAmount: true,
+      },
+    });
+
+    const totalRevenue = paidOrders.reduce((total, order) => total + order.totalAmount, 0);
+
+    return {
+      pendingOrders,
+      completedOrders,
+      totalRevenue,
+    };
+  } catch (error) {
+    console.error('获取订单统计失败:', error);
+    return {
+      pendingOrders: 0,
+      completedOrders: 0,
+      totalRevenue: 0,
+    };
+  }
+}
+
+export async function getRecentOrders(limit = 5) {
+  try {
+    const recentOrders = await prisma.order.findMany({
+      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return recentOrders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      date: order.createdAt,
+      customerName: order.user?.name || 'Guest',
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      amount: order.totalAmount,
+      itemsCount: order.items.length,
+    }));
+  } catch (error) {
+    console.error('获取最近订单失败:', error);
+    return [];
+  }
+}
+
+// 获取月度销售数据
+export async function getMonthlySalesData() {
+  try {
+    const currentYear = new Date().getFullYear();
+    const monthlyData = [];
+
+    // 为每个月份获取销售数据
+    for (let month = 0; month < 12; month++) {
+      const startDate = new Date(currentYear, month, 1);
+      let endDate;
+
+      if (month === 11) {
+        endDate = new Date(currentYear + 1, 0, 1);
+      } else {
+        endDate = new Date(currentYear, month + 1, 1);
+      }
+
+      // 查询这个月的订单
+      const monthlyOrders = await prisma.order.findMany({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lt: endDate,
+          },
+          paymentStatus: 'PAID',
+        },
+        select: {
+          totalAmount: true,
+        },
+      });
+
+      // 计算月度总收入
+      const total = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+      // 获取月份名称
+      const monthName = `${month + 1}月`;
+
+      monthlyData.push({
+        name: monthName,
+        total: total,
+      });
+    }
+
+    return monthlyData;
+  } catch (error) {
+    console.error('获取月度销售数据失败:', error);
+    // 返回默认数据
+    return [
+      { name: '1月', total: 0 },
+      { name: '2月', total: 0 },
+      { name: '3月', total: 0 },
+      { name: '4月', total: 0 },
+      { name: '5月', total: 0 },
+      { name: '6月', total: 0 },
+      { name: '7月', total: 0 },
+      { name: '8月', total: 0 },
+      { name: '9月', total: 0 },
+      { name: '10月', total: 0 },
+      { name: '11月', total: 0 },
+      { name: '12月', total: 0 },
+    ];
   }
 }

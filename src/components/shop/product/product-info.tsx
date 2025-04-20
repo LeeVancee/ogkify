@@ -65,12 +65,12 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
       const result = await addToCartAction(formData);
 
       if (result.success) {
-        toast.success(result.message || `${product.name} 已添加到购物车`);
+        toast.success(result.message || `${product.name} added to cart`);
       } else {
-        toast.error(result.error || '添加到购物车失败');
+        toast.error(result.error || 'Failed to add to cart');
       }
     } catch (error) {
-      toast.error('添加到购物车失败');
+      toast.error('Failed to add to cart');
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -78,7 +78,7 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
   };
 
   const handleAddToWishlist = () => {
-    toast.success(`${product.name} 已添加到收藏夹`);
+    toast.success(`${product.name} added to wishlist`);
   };
 
   const formatPrice = (price: number) => {
@@ -95,7 +95,7 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
 
       {product.colors.length > 0 && (
         <div className="grid gap-2">
-          <div className="font-medium">颜色</div>
+          <div className="font-medium">Colors</div>
           <div className="flex flex-wrap gap-2">
             {product.colors.map((color) => (
               <Button
@@ -114,7 +114,7 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
 
       {product.sizes.length > 0 && (
         <div className="grid gap-2">
-          <div className="font-medium">尺寸</div>
+          <div className="font-medium">Sizes</div>
           <div className="flex flex-wrap gap-2">
             {product.sizes.map((size) => (
               <Button
@@ -131,10 +131,10 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
       )}
 
       <div className="grid gap-2">
-        <div className="font-medium">数量</div>
+        <div className="font-medium">Quantity</div>
         <Select value={quantity} onValueChange={setQuantity}>
           <SelectTrigger className="w-24">
-            <SelectValue placeholder="数量" />
+            <SelectValue placeholder="Quantity" />
           </SelectTrigger>
           <SelectContent>
             {Array.from({ length: 10 }).map((_, i) => (
@@ -149,23 +149,27 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button size="lg" className="sm:flex-1" onClick={handleAddToCart} disabled={isSubmitting}>
           {isSubmitting ? (
-            '添加中...'
+            'Adding...'
           ) : (
             <>
               <ShoppingCart className="mr-2 h-5 w-5" />
-              加入购物车
+              Add to Cart
             </>
           )}
         </Button>
         <Button size="lg" variant="outline" onClick={handleAddToWishlist}>
           <Heart className="mr-2 h-5 w-5" />
-          收藏
+          Wishlist
         </Button>
       </div>
 
       <div className="text-sm text-muted-foreground">
-        {product.inStock ? <span className="text-green-600">有库存</span> : <span className="text-red-600">缺货</span>}
-        {product.freeShipping && <span className="ml-4">免运费</span>}
+        {product.inStock ? (
+          <span className="text-green-600">In Stock</span>
+        ) : (
+          <span className="text-red-600">Out of Stock</span>
+        )}
+        {product.freeShipping && <span className="ml-4">Free Shipping</span>}
       </div>
     </div>
   );

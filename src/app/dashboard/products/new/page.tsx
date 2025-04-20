@@ -1,4 +1,4 @@
-import { ProductForm } from '../../../../components/dashboard/product-form';
+import { ProductForm } from '@/components/dashboard/product/product-form';
 import { getCategories, getColors, getSizes } from '@/actions/products';
 
 export default async function NewProductPage() {

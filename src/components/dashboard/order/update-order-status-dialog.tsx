@@ -61,17 +61,17 @@ export function UpdateOrderStatusDialog({ open, onOpenChange, order, onStatusUpd
       const result = await updateOrderStatus(order.id, status);
 
       if (result.success) {
-        toast.success('订单状态已更新');
+        toast.success('Order status updated');
         onOpenChange(false);
 
         // 使用Next.js的刷新机制刷新页面数据，而不是调用callback
         router.refresh();
       } else {
-        toast.error(result.error || '更新订单状态失败');
+        toast.error(result.error || 'Update order status failed');
       }
     } catch (error) {
-      console.error('更新订单状态失败:', error);
-      toast.error('更新订单状态失败');
+      console.error('Update order status failed:', error);
+      toast.error('Update order status failed');
     } finally {
       setIsUpdating(false);
     }
@@ -81,8 +81,8 @@ export function UpdateOrderStatusDialog({ open, onOpenChange, order, onStatusUpd
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>更新订单状态</DialogTitle>
-          <DialogDescription>订单号: {order.orderNumber}</DialogDescription>
+          <DialogTitle>Update Order Status</DialogTitle>
+          <DialogDescription>Order Number: {order.orderNumber}</DialogDescription>
         </DialogHeader>
 
         <div className="py-4">
@@ -98,16 +98,16 @@ export function UpdateOrderStatusDialog({ open, onOpenChange, order, onStatusUpd
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            取消
+            Cancel
           </Button>
           <Button onClick={handleUpdate} disabled={isUpdating}>
             {isUpdating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                更新中...
+                Updating...
               </>
             ) : (
-              '更新状态'
+              'Update Status'
             )}
           </Button>
         </DialogFooter>

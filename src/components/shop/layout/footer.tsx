@@ -5,12 +5,12 @@ import { Facebook, Instagram, Twitter } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="border-t bg-background">
-      <div className=" px-4 py-12 md:px-6">
+    <footer className="border-t bg-background mt-auto">
+      <div className=" p-8 md:px-6">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold">NextShop</span>
+              <span className="text-xl font-bold">OGKIFY</span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">
               Your modern e-commerce solution for all your shopping needs.
@@ -19,16 +19,16 @@ export default function Footer() {
           <div className="grid grid-cols-1 gap-4">
             <div className="font-medium">Shop</div>
             <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link href="/products" className="hover:underline">
+              <Link href="/categories" className="hover:underline">
                 All Products
               </Link>
               <Link href="/categories" className="hover:underline">
                 Categories
               </Link>
-              <Link href="/products?sort=newest" className="hover:underline">
+              <Link href="/categories?sort=newest" className="hover:underline">
                 New Arrivals
               </Link>
-              <Link href="/products?sort=bestselling" className="hover:underline">
+              <Link href="/categories?sort=bestselling" className="hover:underline">
                 Best Sellers
               </Link>
             </nav>
@@ -80,7 +80,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t pt-6 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} NextShop. All rights reserved.
+          &copy; {new Date().getFullYear()} OGKIFY. All rights reserved.
         </div>
       </div>
     </footer>

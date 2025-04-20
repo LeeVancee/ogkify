@@ -40,12 +40,11 @@ export function ProductGrid({ products }: ProductGridProps) {
           </div>
           <div className="mt-4 space-y-1">
             <h3 className="font-medium">{product.name}</h3>
-            <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>
           </div>
           <div className="mt-4 flex items-center justify-between">
             <div className="font-medium">{formatPrice(product.price)}</div>
             {product.discount ? (
-              <span className="text-xs font-medium text-green-600">{product.discount}% 折扣</span>
+              <span className="text-xs font-medium text-green-600">{product.discount}% Discount</span>
             ) : null}
           </div>
         </Link>

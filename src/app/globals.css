@@ -139,6 +139,10 @@
   }
 }
 
+body {
+  font-family: 'Roboto Variable', sans-serif;
+}
+
 @utility container {
   margin-inline: auto;
   padding-inline: 2rem;

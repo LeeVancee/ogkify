@@ -1,4 +1,3 @@
-import type { Product } from '@/lib/types';
 import { prisma } from '@/lib/prisma';
 
 export async function getProduct(id: string) {

@@ -6,7 +6,6 @@ import { ProductGrid } from '@/components/shop/product/product-grid';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { handleAddToCartFormAction } from '@/actions/cart';
-import { Metadata } from 'next';
 
 // 为ProductGrid组件的产品类型
 interface SimpleProduct {
@@ -23,14 +22,14 @@ interface SimpleProduct {
   freeShipping?: boolean;
 }
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const product = await getProduct(params.id);
 
   if (!product) {
     return {
-      title: '商品未找到',
-      description: '抱歉，我们找不到您要查找的商品',
+      title: 'Product not found',
+      description: "Sorry, we couldn't find the product you were looking for",
     };
   }
 

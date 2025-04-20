@@ -1,39 +1,39 @@
-import type React from 'react';
-export default function DashboardPage() {
+import { Suspense } from 'react';
+import { getOrdersStats, getRecentOrders, getMonthlySalesData } from '@/actions/orders';
+import { getProductsCount } from '@/actions/products';
+import { getCategoriesCount } from '@/actions/categories';
+import { DashboardClient } from '@/components/dashboard/dashboard-client';
+
+export default async function DashboardPage() {
+  // 获取数据
+  const productsCount = await getProductsCount();
+  const categoriesCount = await getCategoriesCount();
+  const { pendingOrders, completedOrders, totalRevenue } = await getOrdersStats();
+  const recentOrders = await getRecentOrders();
+  const monthlySalesData = await getMonthlySalesData();
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-6">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <DashboardCard title="Total Products" value="128" />
-        <DashboardCard title="Total Categories" value="12" />
-        <DashboardCard title="Pending Orders" value="8" />
-        <DashboardCard title="Completed Orders" value="64" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-4 rounded-xl border p-4">
-          <h2 className="mb-4 text-lg font-semibold">Recent Orders</h2>
-          <div className="rounded-md border">
-            {/* Order table would go here */}
-            <div className="p-8 text-center text-muted-foreground">No recent orders</div>
-          </div>
-        </div>
-        <div className="col-span-3 rounded-xl border p-4">
-          <h2 className="mb-4 text-lg font-semibold">Popular Products</h2>
-          <div className="rounded-md border">
-            {/* Products list would go here */}
-            <div className="p-8 text-center text-muted-foreground">No products data</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DashboardClient
+      productsCount={productsCount}
+      categoriesCount={categoriesCount}
+      pendingOrders={pendingOrders}
+      completedOrders={completedOrders}
+      totalRevenue={totalRevenue}
+      recentOrders={recentOrders}
+      popularProducts={[]}
+      monthlySalesData={monthlySalesData}
+    />
   );
 }
 
-function DashboardCard({ title, value }: { title: string; value: string }) {
+export function DashboardCard({ title, value, icon }: { title: string; value: string; icon?: React.ReactNode }) {
   return (
     <div className="rounded-xl border p-4">
-      <div className="text-sm font-medium text-muted-foreground">{title}</div>
-      <div className="mt-1 text-2xl font-bold">{value}</div>
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium text-muted-foreground">{title}</div>
+        {icon && <div>{icon}</div>}
+      </div>
+      <div className="mt-2 text-2xl font-bold">{value}</div>
     </div>
   );
 }

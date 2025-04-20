@@ -14,7 +14,7 @@ export function ColorForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !value) {
-      toast.error('请填写完整信息');
+      toast.error('Please fill in all information');
       return;
     }
 
@@ -22,14 +22,14 @@ export function ColorForm() {
     try {
       const result = await createColor({ name, value });
       if (result.success) {
-        toast.success('颜色创建成功');
+        toast.success('Color created successfully');
         setName('');
         setValue('');
       } else {
         toast.error(result.error);
       }
     } catch (error) {
-      toast.error('操作失败');
+      toast.error('Operation failed');
     } finally {
       setLoading(false);
     }
@@ -38,16 +38,16 @@ export function ColorForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Input placeholder="输入颜色名称" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder="Input color name" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
       <div className="space-y-2">
         <div className="flex gap-2">
           <Input type="color" value={value} onChange={(e) => setValue(e.target.value)} className="w-[60px]" />
-          <Input placeholder="颜色值 (Hex)" value={value} onChange={(e) => setValue(e.target.value)} />
+          <Input placeholder="Color Value (Hex)" value={value} onChange={(e) => setValue(e.target.value)} />
         </div>
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? '创建中...' : '创建颜色'}
+        {loading ? 'Creating...' : 'Create Color'}
       </Button>
     </form>
   );

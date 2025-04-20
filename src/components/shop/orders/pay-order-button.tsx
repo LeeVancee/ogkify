@@ -20,7 +20,7 @@ export function PayOrderButton({ orderId }: PayOrderButtonProps) {
       const result = await createPaymentSession(orderId);
 
       if (!result.success) {
-        throw new Error(result.error || '创建支付会话失败');
+        throw new Error(result.error || 'Failed to create payment session');
       }
 
       // 如果成功，重定向到 Stripe 支付页面
@@ -29,10 +29,10 @@ export function PayOrderButton({ orderId }: PayOrderButtonProps) {
         return;
       }
 
-      toast.error('无法创建支付会话');
+      toast.error('Failed to create payment session');
     } catch (error) {
-      console.error('支付错误:', error);
-      toast.error(error instanceof Error ? error.message : '支付过程中发生错误');
+      console.error('Payment error:', error);
+      toast.error(error instanceof Error ? error.message : 'Payment process failed');
     } finally {
       setIsLoading(false);
     }
@@ -43,10 +43,10 @@ export function PayOrderButton({ orderId }: PayOrderButtonProps) {
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          处理中...
+          Processing...
         </>
       ) : (
-        '立即支付'
+        'Pay Now'
       )}
     </Button>
   );

@@ -5,6 +5,9 @@ import { ProductSort } from '@/components/shop/product/product-sort';
 import { ProductsLoading } from '@/components/shop/product/products-loading';
 import React, { Suspense } from 'react';
 
+// 确保此页面是服务器组件
+export const dynamic = 'force-dynamic';
+
 export default async function CategoriesPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
@@ -53,17 +56,21 @@ export default async function CategoriesPage(props: {
   return (
     <div className="flex h-full flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">所有商品</h1>
+        <h1 className="text-2xl font-bold tracking-tight">All Products</h1>
         <div className="flex items-center gap-4">
-          <p className="text-sm text-muted-foreground">总共 {total} 件产品</p>
-          <ProductSort />
+          <p className="text-sm text-muted-foreground">Total {total} products</p>
+          <Suspense fallback={<div className="w-[180px] h-9 animate-pulse bg-muted rounded-md" />}>
+            <ProductSort />
+          </Suspense>
         </div>
       </div>
       <Suspense fallback={<ProductsLoading />}>
         {products.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed py-12">
-            <h3 className="text-lg font-semibold">未找到商品</h3>
-            <p className="mt-2 text-sm text-muted-foreground">没有找到符合当前筛选条件的商品，请尝试调整筛选条件。</p>
+            <h3 className="text-lg font-semibold">No Products Found</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              No products matching your current filter criteria were found. Please try adjusting your filters.
+            </p>
           </div>
         ) : (
           <>

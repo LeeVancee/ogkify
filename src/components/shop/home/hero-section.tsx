@@ -18,7 +18,7 @@ export function HeroSection() {
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <Button size="lg" asChild>
-                <Link href="/products">Shop Now</Link>
+                <Link href="/categories">Shop Now</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link href="/categories">Browse Categories</Link>

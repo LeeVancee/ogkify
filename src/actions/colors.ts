@@ -22,6 +22,30 @@ export async function getColors() {
   }
 }
 
+export async function getColor(id: string) {
+  try {
+    const color = await prisma.color.findUnique({
+      where: { id },
+    });
+
+    if (!color) {
+      return { success: false, error: '颜色不存在' };
+    }
+
+    return {
+      success: true,
+      color: {
+        id: color.id,
+        name: color.name,
+        value: color.value,
+      },
+    };
+  } catch (error) {
+    console.error('获取颜色失败:', error);
+    return { success: false, error: '获取颜色失败' };
+  }
+}
+
 export async function createColor(data: { name: string; value: string }) {
   try {
     const color = await prisma.color.create({

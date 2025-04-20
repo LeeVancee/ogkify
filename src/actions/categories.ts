@@ -19,6 +19,28 @@ export async function getCategories() {
   }
 }
 
+export async function getCategory(id: string) {
+  try {
+    const category = await prisma.category.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+      },
+    });
+
+    if (!category) {
+      return { success: false, error: '分类不存在' };
+    }
+
+    return { success: true, category };
+  } catch (error) {
+    console.error('获取分类失败:', error);
+    return { success: false, error: '获取分类失败' };
+  }
+}
+
 interface CreateCategoryInput {
   name: string;
   imageUrl: string;
@@ -63,5 +85,15 @@ export async function deleteCategory(id: string) {
     return { success: true };
   } catch (error) {
     return { success: false, error: '删除分类失败' };
+  }
+}
+
+export async function getCategoriesCount() {
+  try {
+    const count = await prisma.category.count();
+    return count;
+  } catch (error) {
+    console.error('获取分类数量失败:', error);
+    return 0;
   }
 }

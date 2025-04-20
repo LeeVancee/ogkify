@@ -30,7 +30,7 @@ function ProductPaginationContent({ currentPage, totalPages }: ProductPagination
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
-    router.push(`/products?${createQueryString({ page: page.toString() })}`);
+    router.push(`/categories?${createQueryString({ page: page.toString() })}`);
   };
 
   // 显示最多5个页码按钮

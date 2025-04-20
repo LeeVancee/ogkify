@@ -1,5 +1,5 @@
 import { getUserOrders } from '@/actions/orders';
-import { OrderManagement } from '@/components/dashboard/order-management';
+import { OrderManagement } from '@/components/dashboard/order/order-management';
 
 export default async function OrdersPage() {
   // 在服务器端获取订单数据

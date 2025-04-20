@@ -80,24 +80,24 @@ export default function MyOrdersPage() {
   function getOrderStatusName(status: string) {
     switch (status) {
       case 'COMPLETED':
-        return '已完成';
+        return 'Completed';
       case 'PROCESSING':
-        return '处理中';
+        return 'Processing';
       case 'PENDING':
-        return '待处理';
+        return 'Pending';
       case 'CANCELLED':
-        return '已取消';
+        return 'Cancelled';
       case 'UNPAID':
-        return '未支付';
+        return 'Unpaid';
       default:
-        return '未知状态';
+        return 'Unknown Status';
     }
   }
 
   if (isLoading) {
     return (
       <div className="container max-w-5xl py-10">
-        <h1 className="mb-8 text-3xl font-bold">我的订单</h1>
+        <h1 className="mb-8 text-3xl font-bold">My Orders</h1>
         <div className="flex justify-center py-10">
           <Clock className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -110,12 +110,12 @@ export default function MyOrdersPage() {
   if (allOrders.length === 0 && unpaidOrders.length === 0) {
     return (
       <div className="container max-w-5xl py-10">
-        <h1 className="mb-8 text-3xl font-bold">我的订单</h1>
+        <h1 className="mb-8 text-3xl font-bold">My Orders</h1>
         <NoOrders
           icon={<ShoppingBag className="h-10 w-10" />}
-          title="您还没有订单"
-          description="开始购物，您的订单将显示在这里"
-          buttonText="浏览商品"
+          title="You have no orders yet."
+          description="Start shopping, and your orders will appear here."
+          buttonText="Browse Products"
           buttonHref="/products"
         />
       </div>
@@ -124,16 +124,16 @@ export default function MyOrdersPage() {
 
   return (
     <div className="container max-w-5xl py-10">
-      <h1 className="mb-8 text-3xl font-bold">我的订单</h1>
+      <h1 className="mb-8 text-3xl font-bold">My Orders</h1>
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-8">
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="all">
-            所有订单
+            All Orders
             <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs">{allOrders.length}</span>
           </TabsTrigger>
           <TabsTrigger value="unpaid">
-            未支付订单
+            Unpaid Orders
             <span className="ml-2 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100 px-2 py-0.5 text-xs">
               {unpaidOrders.length}
             </span>
@@ -143,8 +143,8 @@ export default function MyOrdersPage() {
         <TabsContent value="all" className="mt-6">
           {allOrders.length === 0 ? (
             <div className="rounded-lg border bg-card p-8 text-center">
-              <h3 className="mb-2 text-lg font-semibold">没有订单</h3>
-              <p className="text-muted-foreground">您还没有任何订单。</p>
+              <h3 className="mb-2 text-lg font-semibold">No orders</h3>
+              <p className="text-muted-foreground">You have no orders yet.</p>
             </div>
           ) : (
             <OrdersList
@@ -159,8 +159,8 @@ export default function MyOrdersPage() {
         <TabsContent value="unpaid" className="mt-6">
           {unpaidOrders.length === 0 ? (
             <div className="rounded-lg border bg-card p-8 text-center">
-              <h3 className="mb-2 text-lg font-semibold">没有未支付订单</h3>
-              <p className="text-muted-foreground">您没有任何待支付的订单。</p>
+              <h3 className="mb-2 text-lg font-semibold">No unpaid orders</h3>
+              <p className="text-muted-foreground">You have no unpaid orders.</p>
             </div>
           ) : (
             <OrdersList
@@ -191,13 +191,13 @@ function OrdersList({ orders, showPayButton, getOrderStatusIcon, getOrderStatusN
         <Card key={order.id}>
           <CardHeader>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="text-lg">订单号：{order.orderNumber}</CardTitle>
+              <CardTitle className="text-lg">Order Number: {order.orderNumber}</CardTitle>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
                 <div className="flex items-center gap-1">
                   {order.paymentStatus === 'UNPAID' ? (
                     <>
                       <AlertTriangle className="h-5 w-5 text-amber-500" />
-                      <span className="text-amber-700 dark:text-amber-400">未支付</span>
+                      <span className="text-amber-700 dark:text-amber-400">Unpaid</span>
                     </>
                   ) : (
                     <>
@@ -220,10 +220,10 @@ function OrdersList({ orders, showPayButton, getOrderStatusIcon, getOrderStatusN
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>商品</TableHead>
-                  <TableHead className="text-right">数量</TableHead>
-                  <TableHead className="text-right">单价</TableHead>
-                  <TableHead className="text-right">小计</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-right">Subtotal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -238,8 +238,8 @@ function OrdersList({ orders, showPayButton, getOrderStatusIcon, getOrderStatusN
                         )}
                         <div>
                           <div>{item.productName}</div>
-                          {item.color && <div className="text-xs text-muted-foreground">颜色: {item.color.name}</div>}
-                          {item.size && <div className="text-xs text-muted-foreground">尺寸: {item.size.name}</div>}
+                          {item.color && <div className="text-xs text-muted-foreground">Color: {item.color.name}</div>}
+                          {item.size && <div className="text-xs text-muted-foreground">Size: {item.size.name}</div>}
                         </div>
                       </div>
                     </TableCell>
@@ -255,11 +255,11 @@ function OrdersList({ orders, showPayButton, getOrderStatusIcon, getOrderStatusN
             <div className="flex gap-2">
               {showPayButton && order.paymentStatus === 'UNPAID' && <PayOrderButton orderId={order.id} />}
               <Link href={`/products`}>
-                <Button variant="ghost">继续购物</Button>
+                <Button variant="ghost">Continue Shopping</Button>
               </Link>
             </div>
             <div className="space-y-1 text-right">
-              <div className="text-sm text-muted-foreground">总金额</div>
+              <div className="text-sm text-muted-foreground">Total Amount</div>
               <div className="text-xl font-semibold">{formatPrice(order.totalAmount)}</div>
             </div>
           </CardFooter>

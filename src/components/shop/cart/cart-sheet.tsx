@@ -46,7 +46,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
       const data = await getUserCart();
       setCartData(data);
     } catch (error) {
-      console.error('获取购物车数据失败:', error);
+      console.error('Failed to get cart data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -62,22 +62,22 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="flex w-full flex-col sm:max-w-lg">
         <SheetHeader className="px-1">
-          <SheetTitle>{isLoading ? '加载中...' : `购物车 (${cartData.totalItems})`}</SheetTitle>
+          <SheetTitle>{isLoading ? 'Loading...' : `Cart (${cartData.totalItems})`}</SheetTitle>
         </SheetHeader>
 
         {isLoading ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="text-center text-sm text-muted-foreground">正在加载购物车...</p>
+            <p className="text-center text-sm text-muted-foreground">Loading cart...</p>
           </div>
         ) : isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2">
             <ShoppingBag className="h-12 w-12 text-muted-foreground" />
-            <div className="text-xl font-medium">购物车是空的</div>
-            <p className="text-center text-sm text-muted-foreground">添加商品到购物车以在此处查看。</p>
+            <div className="text-xl font-medium">Cart is empty</div>
+            <p className="text-center text-sm text-muted-foreground">Add products to cart to view them here.</p>
             <SheetTrigger asChild>
               <Button asChild className="mt-4">
-                <Link href="/products">继续购物</Link>
+                <Link href="/products">Continue Shopping</Link>
               </Button>
             </SheetTrigger>
           </div>
@@ -94,23 +94,23 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             <div className="space-y-4 border-t pt-4">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">商品小计</span>
+                  <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
 
                 <div className="flex items-center justify-between font-medium">
-                  <span>总计</span>
+                  <span>Total</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
               </div>
 
               <SheetFooter className="flex flex-col gap-2 sm:flex-row">
                 <SheetTrigger asChild>
-                  <Button variant="outline">继续购物</Button>
+                  <Button variant="outline">Continue Shopping</Button>
                 </SheetTrigger>
                 <SheetTrigger asChild>
                   <Button asChild>
-                    <Link href="/cart">查看购物车</Link>
+                    <Link href="/cart">View Cart</Link>
                   </Button>
                 </SheetTrigger>
               </SheetFooter>

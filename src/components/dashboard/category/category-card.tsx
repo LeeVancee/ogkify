@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { DeleteDialog } from './delete-dialog';
+import { DeleteDialog } from '../delete-dialog';
 
 interface CategoryCardProps {
   category: {

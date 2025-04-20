@@ -1,6 +1,6 @@
 import type React from 'react';
 import Link from 'next/link';
-import { ProductsView } from '../../../components/dashboard/products-view';
+import { ProductsView } from '@/components/dashboard/product/products-view';
 import { Button } from '@/components/ui/button';
 
 import { Plus } from 'lucide-react';

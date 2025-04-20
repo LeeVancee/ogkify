@@ -102,6 +102,8 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
   const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  console.log('orders', orders);
+  console.log('selectedOrder', selectedOrder);
 
   // 使用react-hook-form管理过滤表单
   const { register, watch, setValue, handleSubmit } = useForm<FilterForm>({
@@ -217,15 +219,15 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
   function getOrderStatusName(status: string) {
     switch (status) {
       case 'COMPLETED':
-        return '已完成';
+        return 'Completed';
       case 'PAID': // 在Prisma中是"PAID"，表示处理中
-        return '处理中';
+        return 'Processing';
       case 'PENDING':
-        return '待处理';
+        return 'Pending';
       case 'CANCELLED':
-        return '已取消';
+        return 'Cancelled';
       default:
-        return '未知状态';
+        return 'Unknown Status';
     }
   }
 
@@ -233,26 +235,17 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
   function getPaymentStatusName(status: string) {
     switch (status) {
       case 'PAID':
-        return '已支付';
+        return 'Paid';
       case 'UNPAID':
-        return '未支付';
+        return 'Unpaid';
       case 'REFUNDED':
-        return '已退款';
+        return 'Refunded';
       case 'FAILED':
-        return '支付失败';
+        return 'Failed';
       default:
-        return '未知状态';
+        return 'Unknown Status';
     }
   }
-
-  // 过滤状态选项
-  const statusOptions = [
-    { value: 'ALL', label: '全部' },
-    { value: 'PENDING', label: '待处理' },
-    { value: 'PAID', label: '处理中' }, // 更新为"PAID"状态
-    { value: 'COMPLETED', label: '已完成' },
-    { value: 'CANCELLED', label: '已取消' },
-  ];
 
   // 处理表单提交
   const onSubmit = (data: FilterForm) => {
@@ -264,17 +257,17 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">订单管理</h1>
-          <p className="text-muted-foreground">管理和跟踪客户订单</p>
+          <h1 className="text-3xl font-bold tracking-tight">Order Management</h1>
+          <p className="text-muted-foreground">Manage and track customer orders</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={refreshOrders} disabled={isLoading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            刷新
+            Refresh
           </Button>
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />
-            导出
+            Export
           </Button>
         </div>
       </div>
@@ -285,17 +278,17 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
         <Tabs defaultValue="all" value={statusFilter} onValueChange={(value) => setValue('statusFilter', value)}>
           <div className="flex flex-col md:flex-row justify-between gap-4">
             <TabsList>
-              <TabsTrigger value="all">全部订单</TabsTrigger>
-              <TabsTrigger value="paid">已支付</TabsTrigger>
-              <TabsTrigger value="unpaid">未支付</TabsTrigger>
-              <TabsTrigger value="processing">处理中</TabsTrigger>
+              <TabsTrigger value="all">All Orders</TabsTrigger>
+              <TabsTrigger value="paid">Paid</TabsTrigger>
+              <TabsTrigger value="unpaid">Unpaid</TabsTrigger>
+              <TabsTrigger value="processing">Processing</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="搜索订单..."
+                  placeholder="Search orders..."
                   className="pl-8 w-full md:w-[250px]"
                   {...register('searchQuery')}
                 />
@@ -308,7 +301,7 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
                     onClick={clearSearch}
                   >
                     <X className="h-4 w-4" />
-                    <span className="sr-only">清除搜索</span>
+                    <span className="sr-only">Clear Search</span>
                   </Button>
                 )}
               </div>
@@ -316,20 +309,20 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Filter className="mr-2 h-4 w-4" />
-                    筛选
+                    Filter
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[200px]">
-                  <DropdownMenuLabel>筛选条件</DropdownMenuLabel>
+                  <DropdownMenuLabel>Filter Conditions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <Calendar className="mr-2 h-4 w-4" />
-                    日期范围
+                    Date Range
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <ArrowDownUp className="mr-2 h-4 w-4" />
-                    金额
+                    Amount
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -393,18 +386,18 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
           {selectedOrder && (
             <>
               <DialogHeader className="pb-4">
-                <DialogTitle className="text-2xl">订单详情 #{selectedOrder.orderNumber}</DialogTitle>
+                <DialogTitle className="text-2xl">Order Details #{selectedOrder.orderNumber}</DialogTitle>
                 <DialogDescription className="text-base">
-                  创建于 {new Date(selectedOrder.createdAt).toLocaleString('zh-CN')}
+                  Created at {new Date(selectedOrder.createdAt).toLocaleString('zh-CN')}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
                 <div className="space-y-3 p-4 rounded-lg border">
-                  <h3 className="font-medium text-lg">订单信息</h3>
+                  <h3 className="font-medium text-lg">Order Information</h3>
                   <div className="text-sm space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium min-w-[80px]">订单状态:</span>
+                      <span className="font-medium min-w-[80px]">Order Status:</span>
                       <div className="flex items-center gap-1">
                         {getOrderStatusIcon(selectedOrder.status)}
                         <span>{getOrderStatusName(selectedOrder.status)}</span>
@@ -418,22 +411,22 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium min-w-[80px]">总金额:</span>
+                      <span className="font-medium min-w-[80px]">Total Amount:</span>
                       <span className="font-semibold">{formatPrice(selectedOrder.totalAmount)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium min-w-[80px]">商品数量:</span>
+                      <span className="font-medium min-w-[80px]">Total Items:</span>
                       <span>{selectedOrder.totalItems}</span>
                     </div>
                     {(selectedOrder.customer || selectedOrder.user?.name) && (
                       <div className="flex items-center gap-2">
-                        <span className="font-medium min-w-[80px]">客户:</span>
+                        <span className="font-medium min-w-[80px]">Customer:</span>
                         <span>{selectedOrder.customer || selectedOrder.user?.name}</span>
                       </div>
                     )}
                     {(selectedOrder.email || selectedOrder.user?.email) && (
                       <div className="flex items-center gap-2">
-                        <span className="font-medium min-w-[80px]">邮箱:</span>
+                        <span className="font-medium min-w-[80px]">Email:</span>
                         <span>{selectedOrder.email || selectedOrder.user?.email}</span>
                       </div>
                     )}
@@ -441,37 +434,37 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
                 </div>
 
                 <div className="space-y-3 p-4 rounded-lg border">
-                  <h3 className="font-medium text-lg">收货信息</h3>
+                  <h3 className="font-medium text-lg">Shipping Information</h3>
                   <div className="text-sm space-y-2">
                     {selectedOrder.shippingAddress ? (
                       <>
                         <div className="flex items-start gap-2">
-                          <span className="font-medium min-w-[80px]">收货地址:</span>
+                          <span className="font-medium min-w-[80px]">Shipping Address:</span>
                           <span className="flex-1">{selectedOrder.shippingAddress}</span>
                         </div>
                         {selectedOrder.phone && (
                           <div className="flex items-center gap-2">
-                            <span className="font-medium min-w-[80px]">联系电话:</span>
+                            <span className="font-medium min-w-[80px]">Phone:</span>
                             <span>{selectedOrder.phone}</span>
                           </div>
                         )}
                       </>
                     ) : (
-                      <div className="text-muted-foreground">暂无收货信息</div>
+                      <div className="text-muted-foreground">No shipping information</div>
                     )}
                   </div>
                 </div>
               </div>
 
-              <h3 className="font-medium text-lg mb-3">订单商品</h3>
+              <h3 className="font-medium text-lg mb-3">Order Items</h3>
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[240px]">商品</TableHead>
-                      <TableHead className="text-right">单价</TableHead>
-                      <TableHead className="text-right">数量</TableHead>
-                      <TableHead className="text-right">小计</TableHead>
+                      <TableHead className="w-[240px]">Product</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Quantity</TableHead>
+                      <TableHead className="text-right">Subtotal</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -491,9 +484,9 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
                             <div>
                               <div className="font-medium">{item.productName}</div>
                               <div className="text-xs text-muted-foreground">
-                                {item.color && `颜色: ${item.color.name}`}
+                                {item.color && `Color: ${item.color.name}`}
                                 {item.color && item.size && ' | '}
-                                {item.size && `尺寸: ${item.size.name}`}
+                                {item.size && `Size: ${item.size.name}`}
                               </div>
                             </div>
                           </div>
@@ -508,9 +501,9 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
               </div>
 
               <DialogFooter className="mt-8 pt-4 border-t">
-                <div className="mr-auto text-xl font-bold">总计: {formatPrice(selectedOrder.totalAmount)}</div>
+                <div className="mr-auto text-xl font-bold">Total: {formatPrice(selectedOrder.totalAmount)}</div>
                 <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
-                  关闭
+                  Close
                 </Button>
                 <Button
                   onClick={() => {
@@ -518,7 +511,7 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
                     handleUpdateStatus(selectedOrder);
                   }}
                 >
-                  更新状态
+                  Update Status
                 </Button>
               </DialogFooter>
             </>
@@ -567,14 +560,14 @@ function OrdersTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>订单号</TableHead>
-              <TableHead className="hidden md:table-cell">日期</TableHead>
-              <TableHead>客户</TableHead>
-              <TableHead className="text-right">金额</TableHead>
-              <TableHead>订单状态</TableHead>
-              <TableHead>支付状态</TableHead>
-              <TableHead className="hidden md:table-cell">商品数</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+              <TableHead>Order Number</TableHead>
+              <TableHead className="hidden md:table-cell">Date</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Order Status</TableHead>
+              <TableHead>Payment Status</TableHead>
+              <TableHead className="hidden md:table-cell">Product Number</TableHead>
+              <TableHead className="text-right">Operation</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -582,13 +575,13 @@ function OrdersTable({
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-                  <div className="mt-2 text-muted-foreground">加载订单数据...</div>
+                  <div className="mt-2 text-muted-foreground">Loading order data...</div>
                 </TableCell>
               </TableRow>
             ) : orders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  没有找到订单。请尝试调整筛选条件。
+                  No orders found. Please try adjusting the filters.
                 </TableCell>
               </TableRow>
             ) : (
@@ -625,17 +618,17 @@ function OrdersTable({
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">操作</span>
+                          <span className="sr-only">Operation</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onViewDetails(order)}>
                           <Eye className="mr-2 h-4 w-4" />
-                          查看详情
+                          View Details
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onUpdateStatus(order)}>
                           <RefreshCw className="mr-2 h-4 w-4" />
-                          更新状态
+                          Update Status
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

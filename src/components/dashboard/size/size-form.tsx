@@ -14,7 +14,7 @@ export function SizeForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !value) {
-      toast.error('请填写完整信息');
+      toast.error('Please fill in all information');
       return;
     }
 
@@ -22,14 +22,14 @@ export function SizeForm() {
     try {
       const result = await createSize({ name, value });
       if (result.success) {
-        toast.success('尺寸创建成功');
+        toast.success('Size created successfully');
         setName('');
         setValue('');
       } else {
         toast.error(result.error);
       }
     } catch (error) {
-      toast.error('操作失败');
+      toast.error('Operation failed');
     } finally {
       setLoading(false);
     }
@@ -38,13 +38,17 @@ export function SizeForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Input placeholder="输入尺寸名称" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder="Input size name" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
       <div className="space-y-2">
-        <Input placeholder="输入尺寸值 (如: S, M, L)" value={value} onChange={(e) => setValue(e.target.value)} />
+        <Input
+          placeholder="Input size value (e.g., S, M, L)"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? '创建中...' : '创建尺寸'}
+        {loading ? 'Creating...' : 'Create Size'}
       </Button>
     </form>
   );

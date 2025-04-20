@@ -234,3 +234,46 @@ export async function deleteProduct(id: string) {
     return { success: false, message: '删除商品失败，请稍后重试' };
   }
 }
+
+// 获取产品数量
+export async function getProductsCount() {
+  try {
+    const count = await prisma.product.count();
+    return count;
+  } catch (error) {
+    console.error('获取商品数量失败:', error);
+    return 0;
+  }
+}
+
+// 获取热门产品
+export async function getPopularProducts(limit = 5) {
+  try {
+    // 这里简化处理，实际应该基于订单量或其他指标计算热门程度
+    const products = await prisma.product.findMany({
+      include: {
+        images: true,
+        category: true,
+        orderItems: true,
+      },
+      orderBy: {
+        orderItems: {
+          _count: 'desc',
+        },
+      },
+      take: limit,
+    });
+
+    return products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.images[0]?.url || null,
+      category: product.category?.name || '',
+      orderCount: product.orderItems.length,
+    }));
+  } catch (error) {
+    console.error('获取热门产品失败:', error);
+    return [];
+  }
+}

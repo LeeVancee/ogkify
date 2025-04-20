@@ -22,6 +22,30 @@ export async function getSizes() {
   }
 }
 
+export async function getSize(id: string) {
+  try {
+    const size = await prisma.size.findUnique({
+      where: { id },
+    });
+
+    if (!size) {
+      return { success: false, error: '尺寸不存在' };
+    }
+
+    return {
+      success: true,
+      size: {
+        id: size.id,
+        name: size.name,
+        value: size.value,
+      },
+    };
+  } catch (error) {
+    console.error('获取尺寸失败:', error);
+    return { success: false, error: '获取尺寸失败' };
+  }
+}
+
 export async function createSize(data: { name: string; value: string }) {
   try {
     const size = await prisma.size.create({

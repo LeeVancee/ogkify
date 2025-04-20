@@ -8,11 +8,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { SingleImageUpload } from './single-image-upload';
+import { SingleImageUpload } from '../single-image-upload';
 
 const formSchema = z.object({
-  name: z.string().min(1, '请输入分类名称'),
-  imageUrl: z.string().min(1, '请上传分类图片'),
+  name: z.string().min(1, 'input category name'),
+  imageUrl: z.string().min(1, 'upload category image'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -32,13 +32,13 @@ export function CategoryForm() {
     try {
       const result = await createCategory(values);
       if (result.success) {
-        toast.success('分类创建成功');
+        toast.success('Category created successfully');
         form.reset();
       } else {
         toast.error(result.error);
       }
     } catch (error) {
-      toast.error('操作失败');
+      toast.error('Operation failed');
     }
   }
 
@@ -50,9 +50,9 @@ export function CategoryForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>分类名称</FormLabel>
+              <FormLabel>Category Name</FormLabel>
               <FormControl>
-                <Input placeholder="输入分类名称" {...field} />
+                <Input placeholder="Input category name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -64,7 +64,7 @@ export function CategoryForm() {
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>分类图片</FormLabel>
+              <FormLabel>Category Image</FormLabel>
               <FormControl>
                 <SingleImageUpload value={field.value} onChange={field.onChange} disabled={isSubmitting} />
               </FormControl>
@@ -74,7 +74,7 @@ export function CategoryForm() {
         />
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? '创建中...' : '创建分类'}
+          {isSubmitting ? 'Creating...' : 'Create Category'}
         </Button>
       </form>
     </Form>

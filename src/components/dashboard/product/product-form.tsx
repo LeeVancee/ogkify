@@ -15,46 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UploadThingImage } from '@/components/dashboard/upload-thing';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
-import { updateProduct } from '@/actions/products';
-
-const formSchema = z.object({
-  name: z.string().min(1, {
-    message: '商品名称至少需要1个字符。',
-  }),
-  description: z.string().min(1, {
-    message: '商品描述至少需要1个字符。',
-  }),
-  price: z.string().refine((val) => !isNaN(Number(val)), {
-    message: '价格必须是有效的数字。',
-  }),
-  categoryId: z.string({
-    required_error: '请选择一个分类。',
-  }),
-  colorIds: z.array(z.string()).min(1, {
-    message: '请至少选择一种颜色。',
-  }),
-  sizeIds: z.array(z.string()).min(1, {
-    message: '请至少选择一种尺寸。',
-  }),
-  images: z.array(z.string()).min(1, {
-    message: '请至少上传一张商品图片。',
-  }),
-  isFeatured: z.boolean().default(false),
-  isArchived: z.boolean().default(false),
-});
-
-interface ProductFormValues {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-  categoryId: string;
-  colorIds: string[];
-  sizeIds: string[];
-  images: string[];
-  isFeatured: boolean;
-  isArchived: boolean;
-}
+import { createProduct } from '@/actions/products';
 
 interface Category {
   id: string;
@@ -73,46 +34,73 @@ interface Size {
   value: string;
 }
 
-interface EditProductFormProps {
-  product: ProductFormValues;
+interface ProductFormProps {
   categories: Category[];
   colors: Color[];
   sizes: Size[];
 }
 
-export function EditProductForm({ product, categories, colors, sizes }: EditProductFormProps) {
+const productFormSchema = z.object({
+  name: z.string().min(1, {
+    message: 'Product name must be at least 1 character.',
+  }),
+  description: z.string().min(1, {
+    message: 'Product description must be at least 1 character.',
+  }),
+  price: z.string().refine((val) => !isNaN(Number(val)), {
+    message: 'Price must be a valid number.',
+  }),
+  categoryId: z.string({
+    required_error: 'Please select a category.',
+  }),
+  colorIds: z.array(z.string()).min(1, {
+    message: 'Please select at least one color.',
+  }),
+  sizeIds: z.array(z.string()).min(1, {
+    message: 'Please select at least one size.',
+  }),
+  images: z.array(z.string()).min(1, {
+    message: 'Please upload at least one product image.',
+  }),
+  isFeatured: z.boolean().default(false),
+  isArchived: z.boolean().default(false),
+});
+
+type FormValues = z.infer<typeof productFormSchema>;
+
+export function ProductForm({ categories, colors, sizes }: ProductFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<any>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      categoryId: product.categoryId,
-      colorIds: product.colorIds,
-      sizeIds: product.sizeIds,
-      images: product.images,
-      isFeatured: product.isFeatured,
-      isArchived: product.isArchived,
+      name: '',
+      description: '',
+      price: '',
+      categoryId: '',
+      colorIds: [],
+      sizeIds: [],
+      images: [],
+      isFeatured: false,
+      isArchived: false,
     },
   });
 
-  async function onSubmit(values: any) {
+  async function onSubmit(values: FormValues) {
     setIsLoading(true);
 
     try {
-      const result = await updateProduct(product.id, values);
+      const result = await createProduct(values);
 
       if (result?.error) {
         toast.error(result.error);
-        setIsLoading(false);
       }
-      toast.success('商品更新成功!');
+      toast.success('Product created successfully!');
       router.push('/dashboard/products');
     } catch (error) {
-      toast.error('更新商品失败。请稍后重试。');
+      toast.error('Create product failed. Please try again later.');
+    } finally {
       setIsLoading(false);
     }
   }
@@ -125,9 +113,9 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>商品名称</FormLabel>
+              <FormLabel>Product Name</FormLabel>
               <FormControl>
-                <Input placeholder="输入商品名称" {...field} />
+                <Input placeholder="Input product name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,9 +127,9 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>商品描述</FormLabel>
+              <FormLabel>Product Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="描述商品..." className="resize-none" {...field} />
+                <Textarea placeholder="Describe product..." className="resize-none" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -153,7 +141,7 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           name="price"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>价格</FormLabel>
+              <FormLabel>Price</FormLabel>
               <FormControl>
                 <Input placeholder="99.99" {...field} />
               </FormControl>
@@ -167,11 +155,11 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           name="categoryId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>分类</FormLabel>
+              <FormLabel>Category</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="选择分类" />
+                    <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -226,7 +214,7 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           render={() => (
             <FormItem>
               <div className="mb-4">
-                <FormLabel>颜色</FormLabel>
+                <FormLabel>Color</FormLabel>
               </div>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {colors.map((color) => (
@@ -271,7 +259,7 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           render={() => (
             <FormItem>
               <div className="mb-4">
-                <FormLabel>尺寸</FormLabel>
+                <FormLabel>Size</FormLabel>
               </div>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {sizes.map((size) => (
@@ -314,7 +302,7 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           name="images"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>商品图片</FormLabel>
+              <FormLabel>Product Images</FormLabel>
               <FormControl>
                 <UploadThingImage value={field.value} onChange={field.onChange} disabled={isLoading} />
               </FormControl>
@@ -323,14 +311,9 @@ export function EditProductForm({ product, categories, colors, sizes }: EditProd
           )}
         />
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? '更新中...' : '更新商品'}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => router.push('/dashboard/products')}>
-            取消
-          </Button>
-        </div>
+        <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+          {isLoading ? 'Creating...' : 'Create Product'}
+        </Button>
       </form>
     </Form>
   );

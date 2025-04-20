@@ -17,13 +17,8 @@ import { useEffect, useState } from 'react';
 
 export function DropDown() {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
 
   const { data: session, isPending, error } = authClient.useSession();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const handleLogout = () => {
     authClient.signOut({

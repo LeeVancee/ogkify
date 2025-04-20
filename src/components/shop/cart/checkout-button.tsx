@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 
 export function CheckoutButton() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   async function handleCheckout() {
     setIsLoading(true);
@@ -25,7 +23,7 @@ export function CheckoutButton() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '结账过程中发生错误');
+        throw new Error(data.error || 'Failed to create checkout session');
       }
 
       // 如果成功，重定向到 Stripe 支付页面
@@ -34,10 +32,10 @@ export function CheckoutButton() {
         return;
       }
 
-      toast.error('无法创建结账会话');
+      toast.error('Failed to create checkout session');
     } catch (error) {
-      console.error('结账错误:', error);
-      toast.error(error instanceof Error ? error.message : '结账过程中发生错误');
+      console.error('Checkout error:', error);
+      toast.error(error instanceof Error ? error.message : 'Checkout process failed');
     } finally {
       setIsLoading(false);
     }
@@ -48,10 +46,10 @@ export function CheckoutButton() {
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          处理中...
+          Processing...
         </>
       ) : (
-        '结算'
+        'Checkout'
       )}
     </Button>
   );

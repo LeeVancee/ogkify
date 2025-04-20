@@ -1,109 +1,95 @@
 'use client';
-
-import { useState, useEffect } from 'react';
 import type * as React from 'react';
-import { LayoutDashboard, ShoppingBag, ShoppingCart, Package, Palette, Ruler, Grid, ChevronDown } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { LayoutDashboard, ShoppingBag, ShoppingCart, Package, Palette, Ruler, Grid } from 'lucide-react';
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
+
 import { ActiveLink } from './active-link';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 
 // Navigation item type definition
-interface NavItem {
-  title?: string;
-  url?: string;
-  icon?: React.ElementType;
-  items: { title: string; url: string }[];
-}
 
 // EMS navigation data
 const emsNavigation = [
   {
-    title: '仪表盘',
+    title: 'Dashboard',
     url: '/dashboard',
     icon: LayoutDashboard,
     items: [],
   },
 
   {
-    title: '分类管理',
+    title: 'Categories',
     url: '/dashboard/categories',
     icon: Grid,
     items: [
       {
-        title: '所有分类',
+        title: 'All Categories',
         url: '/dashboard/categories',
       },
       {
-        title: '添加分类',
+        title: 'Add Category',
         url: '/dashboard/categories/new',
       },
     ],
   },
   {
-    title: '颜色管理',
+    title: 'Colors',
     url: '/dashboard/colors',
     icon: Palette,
     items: [
       {
-        title: '所有颜色',
+        title: 'All Colors',
         url: '/dashboard/colors',
       },
       {
-        title: '添加颜色',
+        title: 'Add Color',
         url: '/dashboard/colors/new',
       },
     ],
   },
   {
-    title: '尺寸管理',
+    title: 'Sizes',
     url: '/dashboard/sizes',
     icon: Ruler,
     items: [
       {
-        title: '所有尺寸',
+        title: 'All Sizes',
         url: '/dashboard/sizes',
       },
       {
-        title: '添加尺寸',
+        title: 'Add Size',
         url: '/dashboard/sizes/new',
       },
     ],
   },
   {
-    title: '商品管理',
+    title: 'Products',
     url: '/dashboard/products',
     icon: Package,
     items: [
       {
-        title: '所有商品',
+        title: 'All Products',
         url: '/dashboard/products',
       },
       {
-        title: '添加商品',
+        title: 'Add Product',
         url: '/dashboard/products/new',
       },
     ],
   },
 
   {
-    title: '订单管理',
+    title: 'Orders',
     url: '/dashboard/orders',
     icon: ShoppingCart,
     items: [],
@@ -122,7 +108,7 @@ export function EnhancedSidebar({ ...props }: React.ComponentProps<typeof Sideba
                   <ShoppingBag className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">OGK</span>
+                  <span className="font-semibold">OGKIFY</span>
                   <span className="">v1.0.0</span>
                 </div>
               </ActiveLink>

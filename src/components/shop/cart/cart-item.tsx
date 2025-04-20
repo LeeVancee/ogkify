@@ -8,7 +8,6 @@ import { updateCartItemQuantity, removeFromCart } from '@/actions/cart';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 
 interface CartItemProps {
   item: {
@@ -42,11 +41,11 @@ export function CartItem({ item }: CartItemProps) {
         setQuantity(newQuantity);
         // 无需显示成功消息，避免频繁提示打扰用户
       } else {
-        toast.error(result.error || '更新数量失败');
+        toast.error(result.error || 'Failed to update quantity');
         setQuantity(item.quantity); // 恢复原有数量
       }
     } catch (error) {
-      toast.error('更新数量失败');
+      toast.error('Failed to update quantity');
       setQuantity(item.quantity);
     } finally {
       setIsUpdating(false);
@@ -60,14 +59,14 @@ export function CartItem({ item }: CartItemProps) {
     try {
       const result = await removeFromCart(item.id);
       if (result.success) {
-        toast.success('商品已从购物车中移除');
+        toast.success('Product removed from cart');
         // 刷新页面以反映更改
         window.location.reload();
       } else {
-        toast.error(result.error || '移除商品失败');
+        toast.error(result.error || 'Failed to remove product');
       }
     } catch (error) {
-      toast.error('移除商品失败');
+      toast.error('Failed to remove product');
     } finally {
       setIsRemoving(false);
     }
@@ -129,7 +128,7 @@ export function CartItem({ item }: CartItemProps) {
               disabled={quantity <= 1 || isUpdating}
             >
               <MinusIcon className="h-3 w-3" />
-              <span className="sr-only">减少数量</span>
+              <span className="sr-only">Reduce Quantity</span>
             </Button>
             <div className="w-8 text-center">{quantity}</div>
             <Button
@@ -140,7 +139,7 @@ export function CartItem({ item }: CartItemProps) {
               disabled={isUpdating}
             >
               <PlusIcon className="h-3 w-3" />
-              <span className="sr-only">增加数量</span>
+              <span className="sr-only">Increase Quantity</span>
             </Button>
           </div>
           <Button
@@ -155,7 +154,7 @@ export function CartItem({ item }: CartItemProps) {
             ) : (
               <TrashIcon className="h-4 w-4" />
             )}
-            <span className="sr-only">移除</span>
+            <span className="sr-only">Remove</span>
           </Button>
         </div>
       </div>

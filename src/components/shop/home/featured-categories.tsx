@@ -35,14 +35,14 @@ export async function FeaturedCategories() {
     <section className="container px-4 md:px-6">
       <div className="flex flex-col gap-4 md:gap-8">
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold tracking-tight">商品分类</h2>
-          <p className="text-muted-foreground">浏览我们的商品分类，找到您想要的商品</p>
+          <h2 className="text-3xl font-bold tracking-tight">Categories</h2>
+          <p className="text-muted-foreground">Browse our product categories to find what you want</p>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
           {categories.map((category) => (
             <Link
               key={category.id}
-              href={`/products?category=${category.name}`}
+              href={`/categories?category=${category.name}`}
               className="group relative overflow-hidden rounded-lg border"
             >
               <div className="aspect-square w-full overflow-hidden">

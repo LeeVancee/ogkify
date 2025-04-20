@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Slider } from '@/components/ui/slider';
 import type { Category } from '@/lib/types';
@@ -59,7 +58,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
 
     startTransition(() => {
       router.push(
-        `/products?${createQueryString({
+        `/categories?${createQueryString({
           category: currentCategory === categoryName ? null : categoryName,
         })}`
       );
@@ -68,7 +67,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
 
   const handleFeaturedChange = (value: boolean) => {
     startTransition(() => {
-      router.push(`/products?${createQueryString({ featured: value ? 'true' : null })}`);
+      router.push(`/categories?${createQueryString({ featured: value ? 'true' : null })}`);
     });
   };
 
@@ -80,7 +79,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
       : [...currentColorNames, colorName];
 
     startTransition(() => {
-      router.push(`/products?${createQueryString({ color: newColors.length ? newColors : null })}`);
+      router.push(`/categories?${createQueryString({ color: newColors.length ? newColors : null })}`);
     });
   };
 
@@ -92,7 +91,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
       : [...currentSizeNames, sizeName];
 
     startTransition(() => {
-      router.push(`/products?${createQueryString({ size: newSizes.length ? newSizes : null })}`);
+      router.push(`/categories?${createQueryString({ size: newSizes.length ? newSizes : null })}`);
     });
   };
 
@@ -101,7 +100,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
       const [min, max] = values;
       startTransition(() => {
         router.push(
-          `/products?${createQueryString({
+          `/categories?${createQueryString({
             minPrice: min > 0 ? min.toString() : null,
             maxPrice: max < maxPrice ? max.toString() : null,
           })}`
@@ -112,7 +111,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
 
   const handleResetFilters = () => {
     startTransition(() => {
-      router.push('/products');
+      router.push('/categories');
     });
   };
 
@@ -129,7 +128,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
     <div className="grid gap-6">
       <Accordion type="multiple" defaultValue={['categories', 'featured', 'price']}>
         <AccordionItem value="categories">
-          <AccordionTrigger>分类</AccordionTrigger>
+          <AccordionTrigger>Categories</AccordionTrigger>
           <AccordionContent>
             <div className="grid gap-2">
               {categories.map((category) => (
@@ -149,7 +148,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
         </AccordionItem>
 
         <AccordionItem value="featured">
-          <AccordionTrigger>特色商品</AccordionTrigger>
+          <AccordionTrigger>Featured Products</AccordionTrigger>
           <AccordionContent>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -158,7 +157,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
                 onCheckedChange={(checked) => handleFeaturedChange(!!checked)}
               />
               <Label htmlFor="featured-products" className="text-sm font-normal">
-                仅显示特色商品
+                Only show featured products
               </Label>
             </div>
           </AccordionContent>
@@ -166,7 +165,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
 
         {colors.length > 0 && (
           <AccordionItem value="colors">
-            <AccordionTrigger>颜色</AccordionTrigger>
+            <AccordionTrigger>Colors</AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-2 gap-2">
                 {colors.map((color) => (
@@ -191,7 +190,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
 
         {sizes.length > 0 && (
           <AccordionItem value="sizes">
-            <AccordionTrigger>尺寸</AccordionTrigger>
+            <AccordionTrigger>Sizes</AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-2 gap-2">
                 {sizes.map((size) => (
@@ -212,9 +211,9 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
         )}
 
         <AccordionItem value="price">
-          <AccordionTrigger>价格范围</AccordionTrigger>
+          <AccordionTrigger>Price Range</AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-4">
+            <div className="pt-2 space-y-6">
               <Slider
                 defaultValue={[currentMinPrice, currentMaxPrice]}
                 min={0}
@@ -232,7 +231,7 @@ function ProductFiltersContent({ categories, colors = [], sizes = [], maxPrice =
       </Accordion>
 
       <Button variant="outline" className="w-full" onClick={handleResetFilters} disabled={!hasActiveFilters}>
-        清除筛选
+        Reset Filters
       </Button>
     </div>
   );
@@ -245,7 +244,7 @@ export function ProductFilters(props: ProductFiltersProps) {
         <div className="grid gap-6">
           <Accordion type="multiple" defaultValue={['categories', 'featured', 'price']}>
             <AccordionItem value="categories">
-              <AccordionTrigger>分类</AccordionTrigger>
+              <AccordionTrigger>Category</AccordionTrigger>
               <AccordionContent>
                 <div className="grid gap-2">
                   <div className="h-4 w-full rounded-md bg-muted animate-pulse" />
@@ -255,7 +254,7 @@ export function ProductFilters(props: ProductFiltersProps) {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="price">
-              <AccordionTrigger>价格范围</AccordionTrigger>
+              <AccordionTrigger>Price Range</AccordionTrigger>
               <AccordionContent>
                 <div className="h-4 w-full rounded-md bg-muted animate-pulse mt-4" />
               </AccordionContent>

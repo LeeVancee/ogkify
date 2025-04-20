@@ -6,9 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Suspense } from 'react';
 
 const sortOptions = [
-  { value: 'newest', label: '最新上架' },
-  { value: 'price-asc', label: '价格: 从低到高' },
-  { value: 'price-desc', label: '价格: 从高到低' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'price-asc', label: 'Price: Low to High' },
+  { value: 'price-desc', label: 'Price: High to Low' },
 ];
 
 function ProductSortContent() {
@@ -33,17 +33,17 @@ function ProductSortContent() {
 
   const handleSortChange = (value: string) => {
     // 更新URL，不重新加载页面
-    router.push(`/products?${createQueryString({ sort: value })}`);
+    router.push(`/categories?${createQueryString({ sort: value })}`);
   };
 
   return (
     <div className="flex items-center gap-2">
       <Label htmlFor="sort-select" className="text-sm font-medium">
-        排序方式:
+        Sort by:
       </Label>
       <Select value={currentSort} onValueChange={handleSortChange}>
         <SelectTrigger id="sort-select" className="w-[180px]">
-          <SelectValue placeholder="排序方式" />
+          <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
           {sortOptions.map((option) => (
@@ -63,10 +63,10 @@ export function ProductSort() {
       fallback={
         <div className="flex items-center gap-2">
           <Label htmlFor="sort-select" className="text-sm font-medium">
-            排序方式:
+            Sort by:
           </Label>
           <div className="w-[180px] h-9 rounded-md border bg-background px-3 py-2 animate-pulse">
-            <span className="text-sm text-muted-foreground">加载中...</span>
+            <span className="text-sm text-muted-foreground">Loading...</span>
           </div>
         </div>
       }

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { EditProductForm } from '../../../../components/dashboard/edit-product-form';
+import { EditProductForm } from '@/components/dashboard/product/edit-product-form';
 
 import { getProduct, getCategories, getColors, getSizes } from '@/actions/products';
 

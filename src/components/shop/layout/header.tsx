@@ -13,11 +13,10 @@ import { DropDown } from '../DropDown';
 import { getUserCart } from '@/actions/cart';
 
 const navigation = [
-  { name: '首页', href: '/' },
-  { name: '商品', href: '/products' },
-  { name: '分类', href: '/categories' },
-  { name: '关于我们', href: '/about' },
-  { name: '联系我们', href: '/contact' },
+  { name: 'Home', href: '/' },
+  { name: 'Categories', href: '/categories' },
+  { name: 'About', href: '/about' },
+  { name: 'Contact', href: '/contact' },
 ];
 
 export default function Header() {
@@ -78,7 +77,7 @@ export default function Header() {
         </Sheet>
 
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <span className="text-xl font-bold">电商系统</span>
+          <span className="text-xl font-bold">OGKIFY</span>
         </Link>
 
         <nav className="hidden md:flex md:gap-6 lg:gap-10">
@@ -102,7 +101,7 @@ export default function Header() {
               <Input
                 type="search"
                 name="q"
-                placeholder="搜索商品..."
+                placeholder="Search products..."
                 className="w-full md:w-[200px] lg:w-[300px]"
                 autoFocus
                 onBlur={() => setIsSearchOpen(false)}
@@ -111,7 +110,7 @@ export default function Header() {
           ) : (
             <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
               <Search className="h-5 w-5" />
-              <span className="sr-only">搜索</span>
+              <span className="sr-only">Search</span>
             </Button>
           )}
 
@@ -125,7 +124,7 @@ export default function Header() {
                   {cartItemCount}
                 </span>
               )}
-              <span className="sr-only">打开购物车</span>
+              <span className="sr-only">Open Cart</span>
             </Button>
           </CartSheet>
         </div>

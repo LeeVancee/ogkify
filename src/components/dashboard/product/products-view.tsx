@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductCard } from './product-card';
-import { DeleteDialog } from './delete-dialog';
+import { DeleteDialog } from '../delete-dialog';
 import { deleteProduct } from '@/actions/products';
 import { toast } from 'sonner';
 

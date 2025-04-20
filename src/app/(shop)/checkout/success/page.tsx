@@ -40,14 +40,14 @@ function CheckoutSuccessContent() {
         const response = await fetch(`/api/orders/${orderId}`);
 
         if (!response.ok) {
-          throw new Error('无法获取订单信息');
+          throw new Error('Failed to get order information');
         }
 
         const data = await response.json();
         setOrderData(data.order);
       } catch (error) {
-        console.error('验证支付失败:', error);
-        setError(error instanceof Error ? error.message : '获取订单信息失败');
+        console.error('Failed to get order information', error);
+        setError(error instanceof Error ? error.message : 'Failed to get order information');
       } finally {
         setIsVerifying(false);
       }
@@ -60,8 +60,8 @@ function CheckoutSuccessContent() {
     return (
       <div className="container flex flex-col items-center justify-center py-16">
         <Loader2 className="mb-4 h-16 w-16 animate-spin text-primary" />
-        <h1 className="mb-2 text-2xl font-bold">正在确认您的订单...</h1>
-        <p className="text-center text-muted-foreground">请稍候，我们正在处理您的支付。</p>
+        <h1 className="mb-2 text-2xl font-bold">Verifying your order...</h1>
+        <p className="text-center text-muted-foreground">Please wait, we are processing your payment.</p>
       </div>
     );
   }
@@ -69,12 +69,13 @@ function CheckoutSuccessContent() {
   if (error || !orderData) {
     return (
       <div className="container flex flex-col items-center justify-center py-16">
-        <h1 className="mb-4 text-2xl font-bold">获取订单信息失败</h1>
+        <h1 className="mb-4 text-2xl font-bold">Failed to get order information</h1>
         <p className="mb-8 text-center text-muted-foreground">
-          {error || '无法获取订单详情，但您的支付可能已经处理。请查看您的邮箱或联系客服。'}
+          {error ||
+            'Failed to get order details, but your payment may have been processed. Please check your email or contact customer support.'}
         </p>
         <Button asChild>
-          <Link href="/">返回首页</Link>
+          <Link href="/">Back to Home</Link>
         </Button>
       </div>
     );
@@ -84,43 +85,45 @@ function CheckoutSuccessContent() {
     <>
       <div className="container flex flex-col items-center justify-center py-16">
         <CheckCircle className="mb-4 h-16 w-16 text-green-500" />
-        <h1 className="mb-2 text-2xl font-bold">订单确认</h1>
-        <p className="mb-6 text-center text-muted-foreground">感谢您的购买！您的订单已成功处理。</p>
+        <h1 className="mb-2 text-2xl font-bold">Order confirmed</h1>
+        <p className="mb-6 text-center text-muted-foreground">
+          Thank you for your purchase! Your order has been successfully processed.
+        </p>
 
         <div className="mb-8 w-full max-w-md rounded-lg border bg-card p-6">
           <div className="mb-4">
-            <p className="mb-1 text-sm text-muted-foreground">订单号:</p>
+            <p className="mb-1 text-sm text-muted-foreground">Order Number:</p>
             <p className="text-xl font-semibold">{orderData.orderNumber}</p>
           </div>
 
           {orderData.shippingAddress && (
             <div className="mb-4">
-              <p className="mb-1 text-sm text-muted-foreground">送货地址:</p>
+              <p className="mb-1 text-sm text-muted-foreground">Shipping Address:</p>
               <p className="text-sm">{orderData.shippingAddress}</p>
             </div>
           )}
 
           {orderData.phone && (
             <div className="mb-4">
-              <p className="mb-1 text-sm text-muted-foreground">联系电话:</p>
+              <p className="mb-1 text-sm text-muted-foreground">Phone:</p>
               <p className="text-sm">{orderData.phone}</p>
             </div>
           )}
 
           <div>
-            <p className="mb-1 text-sm text-muted-foreground">订单状态:</p>
+            <p className="mb-1 text-sm text-muted-foreground">Order Status:</p>
             <div className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-              已支付
+              Paid
             </div>
           </div>
         </div>
 
         <div className="flex gap-4">
           <Button asChild variant="outline">
-            <Link href="/products">继续购物</Link>
+            <Link href="/products">Continue Shopping</Link>
           </Button>
           <Button asChild>
-            <Link href="/myorders">查看我的订单</Link>
+            <Link href="/myorders">View My Orders</Link>
           </Button>
         </div>
       </div>
@@ -134,7 +137,7 @@ export default function CheckoutSuccessPage() {
       fallback={
         <div className="container flex flex-col items-center justify-center py-16">
           <Loader2 className="mb-4 h-16 w-16 animate-spin text-primary" />
-          <h1 className="mb-2 text-2xl font-bold">正在加载...</h1>
+          <h1 className="mb-2 text-2xl font-bold">Loading...</h1>
         </div>
       }
     >

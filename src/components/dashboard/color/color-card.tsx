@@ -4,10 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DeleteDialog } from './delete-dialog';
+import { DeleteDialog } from '../delete-dialog';
 
-interface SizeCardProps {
-  size: {
+interface ColorCardProps {
+  color: {
     id: string;
     name: string;
     value: string;
@@ -15,19 +15,22 @@ interface SizeCardProps {
   onDelete: (id: string) => void;
 }
 
-export function SizeCard({ size, onDelete }: SizeCardProps) {
+export function ColorCard({ color, onDelete }: ColorCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   return (
     <>
-      <div className="group relative rounded-lg border p-6">
-        <div className="mb-2 text-2xl font-semibold">{size.value}</div>
+      <div className="group relative rounded-lg border p-4">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="h-20 w-20 rounded-md border" style={{ backgroundColor: color.value }} />
+        </div>
         <div>
-          <h3 className="font-medium">{size.name}</h3>
+          <h3 className="font-medium">{color.name}</h3>
+          <p className="text-sm text-muted-foreground">{color.value}</p>
         </div>
         <div className="absolute right-2 top-2 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
           <Button variant="secondary" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/dashboard/sizes/${size.id}`}>
+            <Link href={`/dashboard/colors/${color.id}`}>
               <Edit className="h-4 w-4" />
               <span className="sr-only">编辑</span>
             </Link>
@@ -43,10 +46,10 @@ export function SizeCard({ size, onDelete }: SizeCardProps) {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={() => {
-          onDelete(size.id);
+          onDelete(color.id);
           setShowDeleteDialog(false);
         }}
-        title={`确定要删除尺寸"${size.name}"吗？`}
+        title={`确定要删除颜色"${color.name}"吗？`}
       />
     </>
   );

@@ -15,8 +15,8 @@ interface FeaturedProductsProps {
 
 export function FeaturedProducts({
   initialProducts,
-  title = '特色商品',
-  description = '探索我们精心挑选的优质商品',
+  title = 'Featured Products',
+  description = 'Explore our carefully selected products',
 }: FeaturedProductsProps) {
   const [products] = useState(initialProducts);
 
@@ -30,7 +30,7 @@ export function FeaturedProducts({
           </div>
           <Button variant="link" asChild className="hidden md:flex items-center gap-1">
             <Link href="/categories?featured=true">
-              浏览全部特色商品
+              View All Featured Products
               <ChevronRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -38,7 +38,7 @@ export function FeaturedProducts({
         <ProductGrid products={products} />
         <div className="flex justify-center md:hidden">
           <Button asChild variant="outline">
-            <Link href="/categories?featured=true">浏览更多商品</Link>
+            <Link href="/categories?featured=true">View More Products</Link>
           </Button>
         </div>
       </div>
