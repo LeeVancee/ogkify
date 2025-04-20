@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { getUserOrders, getUnpaidOrders } from '@/actions/orders';
 import { PayOrderButton } from '@/components/shop/orders/pay-order-button';
+import { DeleteOrderButton } from '@/components/shop/orders/delete-order-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEffect, useState } from 'react';
 
@@ -41,23 +42,28 @@ export default function MyOrdersPage() {
   const [unpaidOrders, setUnpaidOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadOrders() {
-      setIsLoading(true);
-      try {
-        const [allResponse, unpaidResponse] = await Promise.all([getUserOrders(), getUnpaidOrders()]);
+  async function loadOrders() {
+    setIsLoading(true);
+    try {
+      const [allResponse, unpaidResponse] = await Promise.all([getUserOrders(), getUnpaidOrders()]);
 
-        setAllOrders(allResponse.success ? allResponse.orders : []);
-        setUnpaidOrders(unpaidResponse.success ? unpaidResponse.orders : []);
-      } catch (error) {
-        console.error('加载订单失败:', error);
-      } finally {
-        setIsLoading(false);
-      }
+      setAllOrders(allResponse.success ? allResponse.orders : []);
+      setUnpaidOrders(unpaidResponse.success ? unpaidResponse.orders : []);
+    } catch (error) {
+      console.error('加载订单失败:', error);
+    } finally {
+      setIsLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadOrders();
   }, []);
+
+  // 处理订单删除后的刷新
+  const handleOrderDeleted = () => {
+    loadOrders();
+  };
 
   // 获取订单状态图标
   function getOrderStatusIcon(status: string) {
@@ -150,8 +156,10 @@ export default function MyOrdersPage() {
             <OrdersList
               orders={allOrders}
               showPayButton={false}
+              showDeleteButton={false}
               getOrderStatusIcon={getOrderStatusIcon}
               getOrderStatusName={getOrderStatusName}
+              onOrderDeleted={handleOrderDeleted}
             />
           )}
         </TabsContent>
@@ -166,8 +174,10 @@ export default function MyOrdersPage() {
             <OrdersList
               orders={unpaidOrders}
               showPayButton={true}
+              showDeleteButton={true}
               getOrderStatusIcon={getOrderStatusIcon}
               getOrderStatusName={getOrderStatusName}
+              onOrderDeleted={handleOrderDeleted}
             />
           )}
         </TabsContent>
@@ -180,11 +190,20 @@ export default function MyOrdersPage() {
 interface OrdersListProps {
   orders: Order[];
   showPayButton: boolean;
+  showDeleteButton: boolean;
   getOrderStatusIcon: (status: string) => React.ReactNode;
   getOrderStatusName: (status: string) => string;
+  onOrderDeleted: () => void;
 }
 
-function OrdersList({ orders, showPayButton, getOrderStatusIcon, getOrderStatusName }: OrdersListProps) {
+function OrdersList({
+  orders,
+  showPayButton,
+  showDeleteButton,
+  getOrderStatusIcon,
+  getOrderStatusName,
+  onOrderDeleted,
+}: OrdersListProps) {
   return (
     <div className="grid gap-6">
       {orders.map((order) => (
@@ -254,6 +273,9 @@ function OrdersList({ orders, showPayButton, getOrderStatusIcon, getOrderStatusN
           <CardFooter className="flex flex-col items-end space-y-2 sm:flex-row sm:justify-between sm:space-y-0">
             <div className="flex gap-2">
               {showPayButton && order.paymentStatus === 'UNPAID' && <PayOrderButton orderId={order.id} />}
+              {showDeleteButton && order.paymentStatus === 'UNPAID' && (
+                <DeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} onDeleted={onOrderDeleted} />
+              )}
               <Link href={`/products`}>
                 <Button variant="ghost">Continue Shopping</Button>
               </Link>

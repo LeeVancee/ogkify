@@ -307,7 +307,7 @@ export async function createPaymentSession(orderId: string) {
 
       return {
         price_data: {
-          currency: 'cny',
+          currency: 'usd',
           product_data: {
             name: productName,
             description: variantInfo ? `${variantInfo}` : undefined,
@@ -565,3 +565,44 @@ export async function getMonthlySalesData() {
     ];
   }
 }
+
+// 删除未支付订单
+export async function deleteUnpaidOrder(orderId: string) {
+  try {
+    const session = await getSession();
+
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // 获取订单信息，确保它是用户自己的未支付订单
+    const order = await prisma.order.findUnique({
+      where: {
+        id: orderId,
+        userId: session.user.id,
+        paymentStatus: 'UNPAID',
+      },
+    });
+
+    if (!order) {
+      return { success: false, error: 'Order not found or not eligible for deletion' };
+    }
+
+    // 首先删除所有关联的订单项
+    await prisma.orderItem.deleteMany({
+      where: {
+        orderId,
+      },
+    });
+
+    // 然后删除订单本身
+    await prisma.order.delete({
+      where: {
+        id: orderId,
+      },
+    });
+
+    return { success: true, message: 'Order deleted successfully' };
+  } catch (error) {
+    console.error('删除订单失败:', error);
+  }

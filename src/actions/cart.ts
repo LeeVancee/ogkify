@@ -19,8 +19,8 @@ export async function addToCart(data: CartItemData) {
 
     // 检查用户是否登录
     if (!session?.user?.id) {
-      console.error('添加到购物车失败: 用户未登录');
-      return { error: '用户未登录，请先登录', success: false };
+      console.error('add to cart failed: user not logged in');
+      return { error: 'user not logged in, please login', success: false };
     }
 
     // 检查商品是否存在
@@ -29,11 +29,11 @@ export async function addToCart(data: CartItemData) {
     });
 
     if (!product) {
-      console.error('添加到购物车失败: 商品不存在', data.productId);
-      return { error: '商品不存在', success: false };
+      console.error('add to cart failed: product not found', data.productId);
+      return { error: 'product not found', success: false };
     }
 
-    console.log('尝试为用户添加商品到购物车:', session.user.id, data.productId);
+    console.log('try to add product to cart', session.user.id, data.productId);
 
     // 检查用户是否已有购物车
     let cart = await prisma.cart.findFirst({
@@ -42,7 +42,7 @@ export async function addToCart(data: CartItemData) {
 
     // 如果没有购物车，创建一个新的
     if (!cart) {
-      console.log('用户没有购物车，创建新购物车');
+      console.log('user has no cart, create new cart');
       cart = await prisma.cart.create({
         data: { userId: session.user.id },
       });
@@ -59,14 +59,14 @@ export async function addToCart(data: CartItemData) {
     });
 
     if (existingItem) {
-      console.log('购物车中已有该商品，更新数量');
+      console.log('cart already has this product, update quantity');
       // 更新现有商品数量
       await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + data.quantity },
       });
     } else {
-      console.log('添加新商品到购物车');
+      console.log('add new product to cart');
       // 添加新商品到购物车
       await prisma.cartItem.create({
         data: {
@@ -80,10 +80,10 @@ export async function addToCart(data: CartItemData) {
     }
 
     revalidatePath('/cart');
-    return { success: true, message: '商品已添加到购物车' };
+    return { success: true, message: 'product added to cart' };
   } catch (error) {
-    console.error('添加到购物车失败:', error);
-    return { error: '添加到购物车失败，服务器错误', success: false };
+    console.error('add to cart failed:', error);
+    return { error: 'add to cart failed, server error', success: false };
   }
 }
 
@@ -94,7 +94,7 @@ export async function handleAddToCartFormAction(formData: FormData) {
   const colorId = (formData.get('colorId') as string) || undefined;
   const sizeId = (formData.get('sizeId') as string) || undefined;
 
-  console.log('服务器端接收到购物车请求:', { productId, quantity, colorId, sizeId });
+  console.log('server received cart request:', { productId, quantity, colorId, sizeId });
 
   return addToCart({
     productId,
@@ -160,7 +160,7 @@ export async function getUserCart() {
       totalItems: formattedItems.length,
     };
   } catch (error) {
-    console.error('获取购物车失败:', error);
+    console.error('get cart failed:', error);
     return { items: [], totalItems: 0 };
   }
 }
@@ -171,7 +171,7 @@ export async function removeFromCart(cartItemId: string) {
     const session = await getSession();
 
     if (!session?.user?.id) {
-      return { error: '用户未登录', success: false };
+      return { error: 'user not logged in', success: false };
     }
 
     // 验证这个购物车项属于当前用户
@@ -181,7 +181,7 @@ export async function removeFromCart(cartItemId: string) {
     });
 
     if (!cartItem || cartItem.cart.userId !== session.user.id) {
-      return { error: '无权操作此购物车项', success: false };
+      return { error: 'no permission to operate this cart item', success: false };
     }
 
     // 删除购物车项
@@ -190,10 +190,10 @@ export async function removeFromCart(cartItemId: string) {
     });
 
     revalidatePath('/cart');
-    return { success: true, message: '商品已从购物车移除' };
+    return { success: true, message: 'product removed from cart' };
   } catch (error) {
-    console.error('从购物车移除失败:', error);
-    return { error: '从购物车移除失败', success: false };
+    console.error('remove from cart failed:', error);
+    return { error: 'remove from cart failed', success: false };
   }
 }
 
@@ -203,7 +203,7 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
     const session = await getSession();
 
     if (!session?.user?.id) {
-      return { error: '用户未登录', success: false };
+      return { error: 'user not logged in', success: false };
     }
 
     if (quantity <= 0) {
@@ -217,7 +217,7 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
     });
 
     if (!cartItem || cartItem.cart.userId !== session.user.id) {
-      return { error: '无权操作此购物车项', success: false };
+      return { error: 'no permission to operate this cart item', success: false };
     }
 
     // 更新数量
@@ -227,10 +227,10 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
     });
 
     revalidatePath('/cart');
-    return { success: true, message: '购物车已更新' };
+    return { success: true, message: 'cart updated' };
   } catch (error) {
-    console.error('更新购物车数量失败:', error);
-    return { error: '更新购物车数量失败', success: false };
+    console.error('update cart quantity failed:', error);
+    return { error: 'update cart quantity failed', success: false };
   }
 }
 
@@ -240,7 +240,7 @@ export async function clearCart() {
     const session = await getSession();
 
     if (!session?.user?.id) {
-      return { error: '用户未登录', success: false };
+      return { error: 'user not logged in', success: false };
     }
 
     // 获取用户的购物车
@@ -249,7 +249,7 @@ export async function clearCart() {
     });
 
     if (!cart) {
-      return { success: true, message: '购物车已经是空的' };
+      return { success: true, message: 'cart is already empty' };
     }
 
     // 删除购物车中的所有商品
@@ -260,9 +260,9 @@ export async function clearCart() {
     revalidatePath('/cart');
     revalidatePath('/checkout');
 
-    return { success: true, message: '购物车已清空' };
+    return { success: true, message: 'cart cleared' };
   } catch (error) {
-    console.error('清空购物车失败:', error);
-    return { error: '清空购物车失败', success: false };
+    console.error('clear cart failed:', error);
+    return { error: 'clear cart failed', success: false };
   }
 }
