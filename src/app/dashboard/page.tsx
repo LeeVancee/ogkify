@@ -25,15 +25,3 @@ export default async function DashboardPage() {
     />
   );
 }
-
-export function DashboardCard({ title, value, icon }: { title: string; value: string; icon?: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border p-4">
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-medium text-muted-foreground">{title}</div>
-        {icon && <div>{icon}</div>}
-      </div>
-      <div className="mt-2 text-2xl font-bold">{value}</div>
-    </div>
-  );
-}
