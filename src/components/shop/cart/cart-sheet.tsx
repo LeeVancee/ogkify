@@ -77,7 +77,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             <p className="text-center text-sm text-muted-foreground">Add products to cart to view them here.</p>
             <SheetTrigger asChild>
               <Button asChild className="mt-4">
-                <Link href="/products">Continue Shopping</Link>
+                <Link href="/categories">Continue Shopping</Link>
               </Button>
             </SheetTrigger>
           </div>

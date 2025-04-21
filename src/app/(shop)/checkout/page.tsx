@@ -49,7 +49,7 @@ export default function CheckoutPage() {
         <h1 className="mb-2 text-2xl font-bold">购物车是空的</h1>
         <p className="mb-8 text-center text-muted-foreground">您需要先将商品添加到购物车才能结账。</p>
         <Button asChild>
-          <Link href="/products">浏览商品</Link>
+          <Link href="/categories">浏览商品</Link>
         </Button>
       </div>
     );

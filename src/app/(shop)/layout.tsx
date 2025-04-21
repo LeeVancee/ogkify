@@ -2,15 +2,11 @@ import Footer from '@/components/shop/layout/footer';
 import Header from '@/components/shop/layout/header';
 
 import React from 'react';
-import Container from '../container';
-
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className=" min-h-screen">
+    <div className=" min-h-screen flex flex-col">
       <Header />
-      <Container>
-        <main className="flex-1">{children}</main>
-      </Container>
+      <main className="flex-1  container mx-auto px-4 py-8">{children}</main>
       <Footer />
     </div>
   );

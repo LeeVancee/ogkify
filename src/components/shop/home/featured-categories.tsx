@@ -32,35 +32,23 @@ export async function FeaturedCategories() {
   }
 
   return (
-    <section className="container px-4 md:px-6">
-      <div className="flex flex-col gap-4 md:gap-8">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold tracking-tight">Categories</h2>
-          <p className="text-muted-foreground">Browse our product categories to find what you want</p>
-        </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/categories?category=${category.name}`}
-              className="group relative overflow-hidden rounded-lg border"
-            >
-              <div className="aspect-square w-full overflow-hidden">
-                <Image
-                  src={category.imageUrl || '/placeholder.svg'}
-                  alt={category.name}
-                  width={400}
-                  height={400}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-4 text-white">
-                <h3 className="font-medium">{category.name}</h3>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {categories.map((category) => (
+        <Link key={category.id} href={`/products?category=${category.name}`} className="group block">
+          <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
+            <Image
+              src={category.imageUrl || '/placeholder.svg'}
+              alt={category.name}
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <h3 className="text-xl font-semibold text-white">{category.name}</h3>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
   );
 }

@@ -102,7 +102,7 @@ export default function MyOrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-5xl py-10">
+      <div className="container mx-auto max-w-5xl py-10">
         <h1 className="mb-8 text-3xl font-bold">My Orders</h1>
         <div className="flex justify-center py-10">
           <Clock className="h-8 w-8 animate-spin text-primary" />
@@ -111,25 +111,23 @@ export default function MyOrdersPage() {
     );
   }
 
-  const ordersToShow = activeTab === 'all' ? allOrders : unpaidOrders;
-
   if (allOrders.length === 0 && unpaidOrders.length === 0) {
     return (
-      <div className="container max-w-5xl py-10">
+      <div className="containermx-auto  max-w-5xl py-10">
         <h1 className="mb-8 text-3xl font-bold">My Orders</h1>
         <NoOrders
           icon={<ShoppingBag className="h-10 w-10" />}
           title="You have no orders yet."
           description="Start shopping, and your orders will appear here."
           buttonText="Browse Products"
-          buttonHref="/products"
+          buttonHref="/categories"
         />
       </div>
     );
   }
 
   return (
-    <div className="container max-w-5xl py-10">
+    <div className="container mx-auto max-w-5xl py-10">
       <h1 className="mb-8 text-3xl font-bold">My Orders</h1>
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-8">
@@ -276,7 +274,7 @@ function OrdersList({
               {showDeleteButton && order.paymentStatus === 'UNPAID' && (
                 <DeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} onDeleted={onOrderDeleted} />
               )}
-              <Link href={`/products`}>
+              <Link href={`/categories`}>
                 <Button variant="ghost">Continue Shopping</Button>
               </Link>
             </div>

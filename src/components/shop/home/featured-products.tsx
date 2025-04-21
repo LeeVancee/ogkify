@@ -21,25 +21,27 @@ export function FeaturedProducts({
   const [products] = useState(initialProducts);
 
   return (
-    <section className="container px-4 md:px-6">
-      <div className="flex flex-col gap-4 md:gap-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div className="space-y-1">
-            <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
-            <p className="text-muted-foreground">{description}</p>
+    <section className="py-12">
+      <div className="container px-4 mx-auto">
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
+              <p className="text-muted-foreground max-w-3xl">{description}</p>
+            </div>
+            <Button variant="outline" asChild className="hidden md:flex items-center gap-1 self-start">
+              <Link href="/categories?featured=true">
+                View All
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
-          <Button variant="link" asChild className="hidden md:flex items-center gap-1">
-            <Link href="/categories?featured=true">
-              View All Featured Products
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-        <ProductGrid products={products} />
-        <div className="flex justify-center md:hidden">
-          <Button asChild variant="outline">
-            <Link href="/categories?featured=true">View More Products</Link>
-          </Button>
+          <ProductGrid products={products} />
+          <div className="flex justify-center md:hidden mt-4">
+            <Button asChild variant="outline">
+              <Link href="/categories?featured=true">View All Products</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </section>

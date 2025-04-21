@@ -143,7 +143,7 @@ body {
   font-family: 'Roboto Variable', sans-serif;
 }
 
-@utility container {
+/* @utility container {
   margin-inline: auto;
   padding-inline: 2rem;
   @media (width >= --theme(--breakpoint-sm)) {
@@ -153,3 +153,4 @@ body {
     max-width: 1400px;
   }
 }
+ */

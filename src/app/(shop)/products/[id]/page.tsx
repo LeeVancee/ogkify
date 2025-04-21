@@ -1,5 +1,4 @@
 import { getProduct, getRelatedProducts } from '@/actions/product-shop';
-import { ProductGallery } from '@/components/shop/product/product-gallery';
 import { ProductInfo } from '@/components/shop/product/product-info';
 import { ProductTabs } from '@/components/shop/product/product-tabs';
 import { ProductGrid } from '@/components/shop/product/product-grid';
@@ -65,8 +64,7 @@ export default async function ProductPage(props: { params: Promise<{ id: string 
 
   return (
     <div className="container px-4 py-8 md:px-6 md:py-12">
-      <div className="grid gap-8 md:grid-cols-2">
-        <ProductGallery images={product.images} />
+      <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
         <ProductInfo product={product} addToCartAction={handleAddToCartFormAction} />
       </div>
       <ProductTabs product={product} />

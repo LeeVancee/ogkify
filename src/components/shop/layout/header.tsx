@@ -4,17 +4,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Search, Menu } from 'lucide-react';
+import { ShoppingCart, Search, Menu, User } from 'lucide-react';
 import { CartSheet } from '@/components/shop/cart/cart-sheet';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
 import { DropDown } from '../DropDown';
-import { getUserCart } from '@/actions/cart';
 
 const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Categories', href: '/categories' },
+
   { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ];
@@ -22,108 +23,73 @@ const navigation = [
 export default function Header() {
   const pathname = usePathname();
   const [cartItemCount, setCartItemCount] = useState(0);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // 获取购物车数据
-  useEffect(() => {
-    const fetchCartData = async () => {
-      try {
-        const { totalItems } = await getUserCart();
-        setCartItemCount(totalItems);
-      } catch (error) {
-        console.error('获取购物车数据失败:', error);
-      }
-    };
-
-    fetchCartData();
-
-    // 添加事件监听器，当页面获得焦点时刷新购物车数据
-    const handleFocus = () => {
-      fetchCartData();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between max-w-7xl mx-auto">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-            <nav className="flex flex-col gap-4 mt-8">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'text-lg font-medium transition-colors hover:text-primary',
-                    pathname === item.href ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                >
-                  {item.name}
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4 flex h-16 items-center justify-between">
+        <div className="flex items-center">
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col gap-6">
+                <Link href="/" className="text-xl font-bold text-primary" onClick={() => setIsMenuOpen(false)}>
+                  OGKIFY
                 </Link>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
+                <div className="grid gap-4">
+                  {navigation.map((item) => (
+                    <SheetClose key={item.name} asChild>
+                      <Link
+                        href={item.href}
+                        className={cn('text-lg font-medium', pathname === item.href ? 'text-primary' : '')}
+                      >
+                        {item.name}
+                      </Link>
+                    </SheetClose>
+                  ))}
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
 
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <span className="text-xl font-bold">OGKIFY</span>
-        </Link>
+          <Link href="/" className="ml-4 md:ml-0 text-xl font-bold text-primary">
+            OGKIFY
+          </Link>
 
-        <nav className="hidden md:flex md:gap-6 lg:gap-10">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'text-sm font-medium transition-colors hover:text-primary',
-                pathname === item.href ? 'text-primary' : 'text-muted-foreground'
-              )}
-            >
-              {item.name}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden md:flex ml-10 gap-6">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'font-medium hover:text-primary transition-colors',
+                  pathname === item.href ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          {isSearchOpen ? (
-            <form action="/search" className="flex items-center" onSubmit={() => setIsSearchOpen(false)}>
-              <Input
-                type="search"
-                name="q"
-                placeholder="Search products..."
-                className="w-full md:w-[200px] lg:w-[300px]"
-                autoFocus
-                onBlur={() => setIsSearchOpen(false)}
-              />
-            </form>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
-            </Button>
-          )}
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex relative w-full max-w-[200px]">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input type="search" name="q" placeholder="Search..." className="pl-8 w-full" form="search-form" />
+            <form id="search-form" action="/search" className="hidden"></form>
+          </div>
 
           <DropDown />
 
           <CartSheet>
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
-              {cartItemCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                  {cartItemCount}
-                </span>
-              )}
+
               <span className="sr-only">Open Cart</span>
             </Button>
           </CartSheet>

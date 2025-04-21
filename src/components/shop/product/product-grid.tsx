@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
+import Image from 'next/image';
 
 // 简化的产品类型
 export interface SimpleProduct {
@@ -26,28 +27,30 @@ export function ProductGrid({ products }: ProductGridProps) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => (
-        <Link
+        <div
           key={product.id}
-          href={`/products/${product.id}`}
-          className="group overflow-hidden rounded-lg border bg-background p-3 transition-colors hover:bg-accent/50"
+          className="group border rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow"
         >
-          <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-            <img
-              src={product.images[0] || '/placeholder.svg'}
+          <Link href={`/products/${product.id}`} className="block relative aspect-square overflow-hidden bg-muted">
+            <Image
+              src={product.images[0] || '/placeholder.svg?height=300&width=300'}
               alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
             />
+          </Link>
+          <div className="p-4">
+            <Link href={`/products/${product.id}`} className="block">
+              <h3 className="font-medium text-lg mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">{formatPrice(product.price)}</p>
+                {product.discount ? (
+                  <span className="text-xs font-medium text-green-600">{product.discount}% Off</span>
+                ) : null}
+              </div>
+            </Link>
           </div>
-          <div className="mt-4 space-y-1">
-            <h3 className="font-medium">{product.name}</h3>
-          </div>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="font-medium">{formatPrice(product.price)}</div>
-            {product.discount ? (
-              <span className="text-xs font-medium text-green-600">{product.discount}% Discount</span>
-            ) : null}
-          </div>
-        </Link>
+        </div>
       ))}
     </div>
   );

@@ -82,7 +82,7 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="搜索商品..."
+            placeholder="Search products..."
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -95,7 +95,7 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
               onClick={() => setSearchQuery('')}
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">清除搜索</span>
+              <span className="sr-only">Clear search</span>
             </Button>
           )}
         </div>
@@ -104,11 +104,11 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
             <TabsList>
               <TabsTrigger value="table">
                 <List className="mr-2 h-4 w-4" />
-                表格
+                Table
               </TabsTrigger>
               <TabsTrigger value="grid">
                 <Grid className="mr-2 h-4 w-4" />
-                网格
+                Grid
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -118,17 +118,17 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
       {filteredProducts.length === 0 ? (
         <div className="flex h-[400px] flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-            <h3 className="mt-4 text-lg font-semibold">未找到商品</h3>
+            <h3 className="mt-4 text-lg font-semibold">No products found</h3>
             <p className="mb-4 mt-2 text-sm text-muted-foreground">
               {searchQuery
-                ? '没有与您的搜索条件匹配的商品。请尝试使用不同的搜索词。'
-                : '您尚未添加任何商品。点击下方按钮添加商品。'}
+                ? 'No products match your search criteria. Please try using different search terms.'
+                : 'You have not added any products yet. Click the button below to add a product.'}
             </p>
             {!searchQuery && (
               <Button asChild>
                 <Link href="/dashboard/products/new">
                   <Plus className="mr-2 h-4 w-4" />
-                  添加商品
+                  Add Product
                 </Link>
               </Button>
             )}
@@ -139,13 +139,13 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>图片</TableHead>
-                <TableHead>名称</TableHead>
-                <TableHead className="hidden md:table-cell">分类</TableHead>
-                <TableHead className="hidden md:table-cell">价格</TableHead>
-                <TableHead className="hidden lg:table-cell">颜色</TableHead>
-                <TableHead className="hidden lg:table-cell">尺寸</TableHead>
-                <TableHead className="w-[100px]">操作</TableHead>
+                <TableHead>Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead className="hidden md:table-cell">Price</TableHead>
+                <TableHead className="hidden lg:table-cell">Color</TableHead>
+                <TableHead className="hidden lg:table-cell">Size</TableHead>
+                <TableHead className="w-[100px]">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -194,7 +194,7 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                         <Link href={`/dashboard/products/${product.id}`}>
                           <Edit className="h-4 w-4" />
-                          <span className="sr-only">编辑</span>
+                          <span className="sr-only">Edit</span>
                         </Link>
                       </Button>
                       <Button
@@ -204,7 +204,7 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
                         onClick={() => handleDeleteClick(product.id)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">删除</span>
+                        <span className="sr-only">Delete</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -238,7 +238,7 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDelete}
-        title={`确定要删除商品"${productToDeleteData?.name}"吗？`}
+        title={`Are you sure you want to delete the product "${productToDeleteData?.name}"?`}
       />
     </div>
   );

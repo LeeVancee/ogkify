@@ -1,4 +1,4 @@
-import { HeroSection } from '@/components/shop/home/hero-section';
+import HeroSection from '@/components/shop/home/hero-section';
 import { FeaturedCategories } from '@/components/shop/home/featured-categories';
 import { getFeaturedProducts } from '@/actions/get-featured-products';
 import { FeaturedProducts } from '@/components/shop/home/featured-products';
@@ -9,12 +9,14 @@ export default async function Home() {
   const featuredProducts = await getFeaturedProducts(8);
 
   return (
-    <Container>
-      <div className="space-y-16 pb-16">
-        <HeroSection />
-        <FeaturedCategories />
+    <div className="">
+      <HeroSection />
+      <div className=" mx-auto px-4 py-12">
+        <h2 className="text-3xl font-bold text-center mb-8">Featured Products</h2>
         <FeaturedProducts initialProducts={featuredProducts} />
+        <h2 className="text-3xl font-bold text-center mt-16 mb-8">Shop by Category</h2>
+        <FeaturedCategories />
       </div>
-    </Container>
+    </div>
   );
 }

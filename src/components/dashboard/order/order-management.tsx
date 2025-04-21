@@ -567,7 +567,7 @@ function OrdersTable({
               <TableHead>Order Status</TableHead>
               <TableHead>Payment Status</TableHead>
               <TableHead className="hidden md:table-cell">Product Number</TableHead>
-              <TableHead className="text-right">Operation</TableHead>
+              <TableHead className="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -618,7 +618,7 @@ function OrdersTable({
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Operation</span>
+                          <span className="sr-only">Action</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
