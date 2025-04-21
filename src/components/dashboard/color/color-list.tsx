@@ -33,13 +33,13 @@ export function ColorList({ initialColors }: ColorListProps) {
     try {
       const result = await deleteColor(id);
       if (result.success) {
-        toast.success('删除成功');
+        toast.success('Color deleted successfully');
         setColors(colors.filter((c) => c.id !== id));
       } else {
         toast.error(result.error);
       }
     } catch (error) {
-      toast.error('删除失败');
+      toast.error('Failed to delete color');
     }
   }
 
@@ -49,7 +49,7 @@ export function ColorList({ initialColors }: ColorListProps) {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="搜索颜色..."
+            placeholder="Search for colors..."
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -62,14 +62,14 @@ export function ColorList({ initialColors }: ColorListProps) {
               onClick={() => setSearchQuery('')}
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">清除搜索</span>
+              <span className="sr-only">Clear search</span>
             </Button>
           )}
         </div>
         <Button asChild>
           <Link href="/dashboard/colors/new">
             <Plus className="mr-2 h-4 w-4" />
-            添加颜色
+            Add Color
           </Link>
         </Button>
       </div>
@@ -77,11 +77,11 @@ export function ColorList({ initialColors }: ColorListProps) {
       {filteredColors.length === 0 ? (
         <div className="flex h-[400px] flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-            <h3 className="mt-4 text-lg font-semibold">未找到颜色</h3>
+            <h3 className="mt-4 text-lg font-semibold">No colors found</h3>
             <p className="mb-4 mt-2 text-sm text-muted-foreground">
               {searchQuery
-                ? '没有与您的搜索条件匹配的颜色。请尝试使用不同的搜索词。'
-                : '您尚未添加任何颜色。点击上方按钮添加颜色。'}
+                ? 'No colors match your search criteria. Please try using different search terms.'
+                : 'You have not added any colors yet. Click the button above to add a color.'}
             </p>
           </div>
         </div>

@@ -33,13 +33,13 @@ export function SizeList({ initialSizes }: SizeListProps) {
     try {
       const result = await deleteSize(id);
       if (result.success) {
-        toast.success('删除成功');
+        toast.success('Size deleted successfully');
         setSizes(sizes.filter((s) => s.id !== id));
       } else {
         toast.error(result.error);
       }
     } catch (error) {
-      toast.error('删除失败');
+      toast.error('Failed to delete size');
     }
   }
 
@@ -49,7 +49,7 @@ export function SizeList({ initialSizes }: SizeListProps) {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="搜索尺寸..."
+            placeholder="Search for sizes..."
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -62,14 +62,14 @@ export function SizeList({ initialSizes }: SizeListProps) {
               onClick={() => setSearchQuery('')}
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">清除搜索</span>
+              <span className="sr-only">Clear search</span>
             </Button>
           )}
         </div>
         <Button asChild>
           <Link href="/dashboard/sizes/new">
             <Plus className="mr-2 h-4 w-4" />
-            添加尺寸
+            Add Size
           </Link>
         </Button>
       </div>
@@ -77,11 +77,11 @@ export function SizeList({ initialSizes }: SizeListProps) {
       {filteredSizes.length === 0 ? (
         <div className="flex h-[400px] flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-            <h3 className="mt-4 text-lg font-semibold">未找到尺寸</h3>
+            <h3 className="mt-4 text-lg font-semibold">No sizes found</h3>
             <p className="mb-4 mt-2 text-sm text-muted-foreground">
               {searchQuery
-                ? '没有与您的搜索条件匹配的尺寸。请尝试使用不同的搜索词。'
-                : '您尚未添加任何尺寸。点击上方按钮添加尺寸。'}
+                ? 'No sizes match your search criteria. Please try using different search terms.'
+                : 'You have not added any sizes yet. Click the button above to add a size.'}
             </p>
           </div>
         </div>

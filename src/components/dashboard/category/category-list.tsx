@@ -33,13 +33,13 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
     try {
       const result = await deleteCategory(id);
       if (result.success) {
-        toast.success('删除成功');
+        toast.success('Category deleted successfully');
         setCategories(categories.filter((c) => c.id !== id));
       } else {
         toast.error(result.error);
       }
     } catch (error) {
-      toast.error('删除失败');
+      toast.error('Failed to delete category');
     }
   }
 
@@ -49,7 +49,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="搜索分类..."
+            placeholder="Search for categories..."
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -62,14 +62,14 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
               onClick={() => setSearchQuery('')}
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">清除搜索</span>
+              <span className="sr-only">Clear search</span>
             </Button>
           )}
         </div>
         <Button asChild>
           <Link href="/dashboard/categories/new">
             <Plus className="mr-2 h-4 w-4" />
-            添加分类
+            Add Category
           </Link>
         </Button>
       </div>
@@ -77,11 +77,11 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
       {filteredCategories.length === 0 ? (
         <div className="flex h-[400px] flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-            <h3 className="mt-4 text-lg font-semibold">未找到分类</h3>
+            <h3 className="mt-4 text-lg font-semibold">No categories found</h3>
             <p className="mb-4 mt-2 text-sm text-muted-foreground">
               {searchQuery
-                ? '没有与您的搜索条件匹配的分类。请尝试使用不同的搜索词。'
-                : '您尚未添加任何分类。点击上方按钮添加分类。'}
+                ? 'No categories match your search criteria. Please try using different search terms.'
+                : 'You have not added any categories yet. Click the button above to add a category.'}
             </p>
           </div>
         </div>

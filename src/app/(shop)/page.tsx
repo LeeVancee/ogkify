@@ -5,8 +5,8 @@ import { FeaturedProducts } from '@/components/shop/home/featured-products';
 import Container from '../container';
 
 export default async function Home() {
-  // 获取特色商品，限制为8个
-  const featuredProducts = await getFeaturedProducts(8);
+  // 获取特色商品，限制为4个
+  const featuredProducts = await getFeaturedProducts(4);
 
   return (
     <div className="">

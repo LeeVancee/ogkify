@@ -37,12 +37,12 @@ export function CategoryCard({ category, onDelete }: CategoryCardProps) {
             <Button variant="secondary" size="icon" className="h-8 w-8" asChild>
               <Link href={`/dashboard/categories/${category.id}`}>
                 <Edit className="h-4 w-4" />
-                <span className="sr-only">编辑</span>
+                <span className="sr-only">Edit</span>
               </Link>
             </Button>
             <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="h-4 w-4" />
-              <span className="sr-only">删除</span>
+              <span className="sr-only">Delete</span>
             </Button>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function CategoryCard({ category, onDelete }: CategoryCardProps) {
           onDelete(category.id);
           setShowDeleteDialog(false);
         }}
-        title={`确定要删除分类"${category.name}"吗？`}
+        title={`Are you sure you want to delete the category "${category.name}"?`}
       />
     </>
   );

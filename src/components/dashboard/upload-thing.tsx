@@ -29,11 +29,11 @@ export function UploadThingImage({ value, onChange, disabled }: UploadThingImage
         // 将新上传的 URL 添加到现有的 value 中
         onChange([...value, ...uploadedUrls]);
         setFiles([]);
-        toast.success('图片上传成功');
+        toast.success('Image uploaded successfully');
       }
     },
     onUploadError: (error) => {
-      toast.error(`上传失败: ${error.message}`);
+      toast.error(`Upload failed: ${error.message}`);
     },
   });
 
@@ -114,7 +114,7 @@ export function UploadThingImage({ value, onChange, disabled }: UploadThingImage
                       size="sm"
                       className="mt-2"
                     >
-                      清除选择
+                      Cancel
                     </Button>
                   </div>
                   <Button
@@ -127,11 +127,11 @@ export function UploadThingImage({ value, onChange, disabled }: UploadThingImage
                     size="sm"
                   >
                     {isUploading ? (
-                      '上传中...'
+                      'Uploading...'
                     ) : (
                       <>
                         <Upload className="h-4 w-4 mr-2" />
-                        确认上传
+                        Confirm Upload
                       </>
                     )}
                   </Button>
@@ -139,12 +139,12 @@ export function UploadThingImage({ value, onChange, disabled }: UploadThingImage
               ) : (
                 <div className="text-center space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    {isDragActive ? '松开以上传文件' : '拖放图片到这里，或点击选择图片'}
+                    {isDragActive ? 'Drop to upload' : 'Drop images here or click to select'}
                   </p>
                   {fileRejections.length > 0 && (
-                    <p className="text-sm text-destructive">文件格式不正确或超过大小限制</p>
+                    <p className="text-sm text-destructive">File format is incorrect or exceeds size limit</p>
                   )}
-                  <p className="text-xs text-muted-foreground">支持的格式: JPG, PNG, GIF, WEBP (最大 5MB)</p>
+                  <p className="text-xs text-muted-foreground">Supported formats: JPG, PNG, GIF, WEBP (max 5MB)</p>
                 </div>
               )}
             </div>

@@ -3,7 +3,6 @@ import { ProductInfo } from '@/components/shop/product/product-info';
 import { ProductTabs } from '@/components/shop/product/product-tabs';
 import { ProductGrid } from '@/components/shop/product/product-grid';
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 import { handleAddToCartFormAction } from '@/actions/cart';
 
 // 为ProductGrid组件的产品类型

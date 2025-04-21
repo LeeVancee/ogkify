@@ -182,8 +182,8 @@ export function ProductForm({ categories, colors, sizes }: ProductFormProps) {
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">精选商品</FormLabel>
-                  <FormDescription>精选商品将会显示在首页上。</FormDescription>
+                  <FormLabel className="text-base">Featured Product</FormLabel>
+                  <FormDescription>Featured products will be displayed on the homepage.</FormDescription>
                 </div>
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -197,8 +197,8 @@ export function ProductForm({ categories, colors, sizes }: ProductFormProps) {
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">归档商品</FormLabel>
-                  <FormDescription>归档商品将不会显示在商店中。</FormDescription>
+                  <FormLabel className="text-base">Archived Product</FormLabel>
+                  <FormDescription>Archived products will not be displayed in the store.</FormDescription>
                 </div>
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />

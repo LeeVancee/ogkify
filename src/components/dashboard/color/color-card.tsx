@@ -32,12 +32,12 @@ export function ColorCard({ color, onDelete }: ColorCardProps) {
           <Button variant="secondary" size="icon" className="h-8 w-8" asChild>
             <Link href={`/dashboard/colors/${color.id}`}>
               <Edit className="h-4 w-4" />
-              <span className="sr-only">编辑</span>
+              <span className="sr-only">Edit</span>
             </Link>
           </Button>
           <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setShowDeleteDialog(true)}>
             <Trash2 className="h-4 w-4" />
-            <span className="sr-only">删除</span>
+            <span className="sr-only">Delete</span>
           </Button>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function ColorCard({ color, onDelete }: ColorCardProps) {
           onDelete(color.id);
           setShowDeleteDialog(false);
         }}
-        title={`确定要删除颜色"${color.name}"吗？`}
+        title={`Are you sure you want to delete the color "${color.name}"?`}
       />
     </>
   );

@@ -23,8 +23,8 @@ export function DeleteDialog({
   open,
   onOpenChange,
   onConfirm,
-  title = '确定要删除吗？',
-  description = '此操作无法撤销。该项目将被永久删除，且无法恢复。',
+  title = 'Are you sure you want to delete?',
+  description = 'This action cannot be undone. The item will be permanently deleted and cannot be recovered.',
 }: DeleteDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -34,9 +34,9 @@ export function DeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className="bg-red-500 hover:bg-red-600">
-            删除
+            Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
