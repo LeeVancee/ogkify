@@ -21,26 +21,6 @@ interface SimpleProduct {
   freeShipping?: boolean;
 }
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const product = await getProduct(params.id);
-
-  if (!product) {
-    return {
-      title: 'Product not found',
-      description: "Sorry, we couldn't find the product you were looking for",
-    };
-  }
-
-  return {
-    title: product.name,
-    description: product.description,
-    openGraph: {
-      images: product.images.length > 0 ? [{ url: product.images[0] }] : [],
-    },
-  };
-}
-
 export default async function ProductPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const product = await getProduct(params.id);
