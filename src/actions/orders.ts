@@ -320,7 +320,7 @@ export async function createPaymentSession(orderId: string) {
     });
 
     // 使用绝对URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
     // 创建Stripe结账会话
     const checkoutSession = await stripe.checkout.sessions.create({
