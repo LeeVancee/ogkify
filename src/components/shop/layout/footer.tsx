@@ -80,7 +80,12 @@ export default function Footer() {
               </div>
             </div>
           </div>
-          <div className="mt-12 border-t pt-6 text-center text-sm text-muted-foreground">
+        </div>
+      </div>
+
+      <div className="border-t w-full">
+        <div className=" mx-auto px-4">
+          <div className="py-6 text-center text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} OGKIFY. All rights reserved.
           </div>
         </div>

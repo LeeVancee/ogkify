@@ -39,7 +39,7 @@ export function ProductGrid({ products }: ProductGridProps) {
               className="object-cover transition-transform group-hover:scale-105"
             />
           </Link>
-          <div className="p-4">
+          <div className="p-4 bg-muted">
             <Link href={`/products/${product.id}`} className="block">
               <h3 className="font-medium text-lg mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
               <div className="flex items-center justify-between">
