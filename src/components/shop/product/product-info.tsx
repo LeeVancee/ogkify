@@ -137,7 +137,7 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
                     className={cn(
                       'flex h-10 items-center justify-center rounded-md border-2 text-sm transition-all',
                       selectedColor === color.id
-                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                        ? 'border-blue-600 bg-muted text-blue-600'
                         : 'border-gray-200 hover:border-gray-300'
                     )}
                     title={color.name}
@@ -161,7 +161,7 @@ export function ProductInfo({ product, addToCartAction }: ProductInfoProps) {
                     className={cn(
                       'flex h-10 items-center justify-center rounded-md border-2 text-sm transition-all',
                       selectedSize === size.id
-                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                        ? 'border-blue-600 bg-muted text-blue-600'
                         : 'border-gray-200 hover:border-gray-300'
                     )}
                     onClick={() => setSelectedSize(size.id)}
