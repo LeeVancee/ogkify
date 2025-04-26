@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { categories } from '@/db/schema';
 
 interface Category {
   id: string;
@@ -10,14 +11,15 @@ interface Category {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    const categories = await prisma.category.findMany({
-      select: {
-        id: true,
-        name: true,
-        imageUrl: true,
-      },
-    });
-    return categories;
+    const result = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        imageUrl: categories.imageUrl,
+      })
+      .from(categories);
+
+    return result;
   } catch (error) {
     console.error('获取分类失败:', error);
     return [];

@@ -1,9 +1,11 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { carts, cartItems, products, colors, sizes, images } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { getSession } from './getSession';
 import { cookies } from 'next/headers';
+import { eq, and } from 'drizzle-orm';
 
 export interface CartItemData {
   productId: string;
@@ -24,11 +26,15 @@ export async function addToCart(data: CartItemData) {
     }
 
     // 检查商品是否存在
-    const product = await prisma.product.findUnique({
-      where: { id: data.productId },
-    });
+    const productResult = await db
+      .select({
+        id: products.id,
+      })
+      .from(products)
+      .where(eq(products.id, data.productId))
+      .limit(1);
 
-    if (!product) {
+    if (!productResult.length) {
       console.error('add to cart failed: product not found', data.productId);
       return { error: 'product not found', success: false };
     }
@@ -36,46 +42,61 @@ export async function addToCart(data: CartItemData) {
     console.log('try to add product to cart', session.user.id, data.productId);
 
     // 检查用户是否已有购物车
-    let cart = await prisma.cart.findFirst({
-      where: { userId: session.user.id },
-    });
+    const cartResult = await db
+      .select({
+        id: carts.id,
+      })
+      .from(carts)
+      .where(eq(carts.userId, session.user.id))
+      .limit(1);
+
+    let cartId;
 
     // 如果没有购物车，创建一个新的
-    if (!cart) {
+    if (!cartResult.length) {
       console.log('user has no cart, create new cart');
-      cart = await prisma.cart.create({
-        data: { userId: session.user.id },
-      });
+      const [newCart] = await db.insert(carts).values({ userId: session.user.id }).returning({ id: carts.id });
+
+      cartId = newCart.id;
+    } else {
+      cartId = cartResult[0].id;
     }
 
     // 检查购物车中是否已有该商品
-    const existingItem = await prisma.cartItem.findFirst({
-      where: {
-        cartId: cart.id,
-        productId: data.productId,
-        colorId: data.colorId,
-        sizeId: data.sizeId,
-      },
-    });
+    const existingItemResult = await db
+      .select({
+        id: cartItems.id,
+        quantity: cartItems.quantity,
+      })
+      .from(cartItems)
+      .where(
+        and(
+          eq(cartItems.cartId, cartId),
+          eq(cartItems.productId, data.productId),
+          data.colorId ? eq(cartItems.colorId, data.colorId) : undefined,
+          data.sizeId ? eq(cartItems.sizeId, data.sizeId) : undefined
+        )
+      )
+      .limit(1);
 
-    if (existingItem) {
+    if (existingItemResult.length) {
       console.log('cart already has this product, update quantity');
       // 更新现有商品数量
-      await prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + data.quantity },
-      });
+      await db
+        .update(cartItems)
+        .set({
+          quantity: existingItemResult[0].quantity + data.quantity,
+        })
+        .where(eq(cartItems.id, existingItemResult[0].id));
     } else {
       console.log('add new product to cart');
       // 添加新商品到购物车
-      await prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId: data.productId,
-          quantity: data.quantity,
-          colorId: data.colorId,
-          sizeId: data.sizeId,
-        },
+      await db.insert(cartItems).values({
+        cartId,
+        productId: data.productId,
+        quantity: data.quantity,
+        colorId: data.colorId,
+        sizeId: data.sizeId,
       });
     }
 
@@ -113,51 +134,123 @@ export async function getUserCart() {
       return { items: [], totalItems: 0 };
     }
 
-    // 使用Prisma一次性查询购物车，包括所有关联数据
-    const cart = await prisma.cart.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-              },
-            },
-            color: true,
-            size: true,
-          },
-        },
-      },
-    });
+    // 获取用户购物车
+    const cartResult = await db
+      .select({
+        id: carts.id,
+      })
+      .from(carts)
+      .where(eq(carts.userId, session.user.id))
+      .limit(1);
 
-    if (!cart || !cart.items.length) {
+    if (!cartResult.length) {
       return { items: [], totalItems: 0 };
     }
 
-    // 格式化购物车数据
-    const formattedItems = cart.items.map((item) => {
-      return {
-        id: item.id,
-        productId: item.productId,
-        name: item.product.name,
-        price: item.product.price,
-        quantity: item.quantity,
-        image: item.product.images[0]?.url || '/placeholder.svg',
-        colorId: item.colorId,
-        colorName: item.color?.name || null,
-        colorValue: item.color?.value || null,
-        sizeId: item.sizeId,
-        sizeName: item.size?.name || null,
-        sizeValue: item.size?.value || null,
-      };
-    });
+    const cartId = cartResult[0].id;
+
+    // 获取购物车项
+    const cartItemsResult = await db
+      .select({
+        id: cartItems.id,
+        productId: cartItems.productId,
+        quantity: cartItems.quantity,
+        colorId: cartItems.colorId,
+        sizeId: cartItems.sizeId,
+      })
+      .from(cartItems)
+      .where(eq(cartItems.cartId, cartId));
+
+    if (!cartItemsResult.length) {
+      return { items: [], totalItems: 0 };
+    }
+
+    // 获取所有购物车项数据
+    const formattedItems = await Promise.all(
+      cartItemsResult.map(async (item) => {
+        // 获取产品信息
+        const productResult = await db
+          .select({
+            id: products.id,
+            name: products.name,
+            price: products.price,
+          })
+          .from(products)
+          .where(eq(products.id, item.productId))
+          .limit(1);
+
+        if (!productResult.length) {
+          return null;
+        }
+
+        const product = productResult[0];
+
+        // 获取图片
+        const imageResult = await db
+          .select({
+            url: images.url,
+          })
+          .from(images)
+          .where(eq(images.productId, item.productId))
+          .limit(1);
+
+        // 获取颜色
+        let colorData = null;
+        if (item.colorId) {
+          const colorResult = await db
+            .select({
+              name: colors.name,
+              value: colors.value,
+            })
+            .from(colors)
+            .where(eq(colors.id, item.colorId))
+            .limit(1);
+
+          if (colorResult.length) {
+            colorData = colorResult[0];
+          }
+        }
+
+        // 获取尺寸
+        let sizeData = null;
+        if (item.sizeId) {
+          const sizeResult = await db
+            .select({
+              name: sizes.name,
+              value: sizes.value,
+            })
+            .from(sizes)
+            .where(eq(sizes.id, item.sizeId))
+            .limit(1);
+
+          if (sizeResult.length) {
+            sizeData = sizeResult[0];
+          }
+        }
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          name: product.name,
+          price: product.price,
+          quantity: item.quantity,
+          image: imageResult.length ? imageResult[0].url : '/placeholder.svg',
+          colorId: item.colorId,
+          colorName: colorData?.name || null,
+          colorValue: colorData?.value || null,
+          sizeId: item.sizeId,
+          sizeName: sizeData?.name || null,
+          sizeValue: sizeData?.value || null,
+        };
+      })
+    );
+
+    // 过滤掉null值（可能是由于产品已被删除）
+    const validItems = formattedItems.filter(Boolean);
 
     return {
-      items: formattedItems,
-      totalItems: formattedItems.length,
+      items: validItems,
+      totalItems: validItems.length,
     };
   } catch (error) {
     console.error('get cart failed:', error);
@@ -175,19 +268,33 @@ export async function removeFromCart(cartItemId: string) {
     }
 
     // 验证这个购物车项属于当前用户
-    const cartItem = await prisma.cartItem.findUnique({
-      where: { id: cartItemId },
-      include: { cart: true },
-    });
+    const cartItemResult = await db
+      .select({
+        id: cartItems.id,
+        cartId: cartItems.cartId,
+      })
+      .from(cartItems)
+      .where(eq(cartItems.id, cartItemId))
+      .limit(1);
 
-    if (!cartItem || cartItem.cart.userId !== session.user.id) {
+    if (!cartItemResult.length) {
+      return { error: 'cart item not found', success: false };
+    }
+
+    const cartResult = await db
+      .select({
+        userId: carts.userId,
+      })
+      .from(carts)
+      .where(eq(carts.id, cartItemResult[0].cartId))
+      .limit(1);
+
+    if (!cartResult.length || cartResult[0].userId !== session.user.id) {
       return { error: 'no permission to operate this cart item', success: false };
     }
 
     // 删除购物车项
-    await prisma.cartItem.delete({
-      where: { id: cartItemId },
-    });
+    await db.delete(cartItems).where(eq(cartItems.id, cartItemId));
 
     revalidatePath('/cart');
     return { success: true, message: 'product removed from cart' };
@@ -211,20 +318,33 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
     }
 
     // 验证这个购物车项属于当前用户
-    const cartItem = await prisma.cartItem.findUnique({
-      where: { id: cartItemId },
-      include: { cart: true },
-    });
+    const cartItemResult = await db
+      .select({
+        id: cartItems.id,
+        cartId: cartItems.cartId,
+      })
+      .from(cartItems)
+      .where(eq(cartItems.id, cartItemId))
+      .limit(1);
 
-    if (!cartItem || cartItem.cart.userId !== session.user.id) {
+    if (!cartItemResult.length) {
+      return { error: 'cart item not found', success: false };
+    }
+
+    const cartResult = await db
+      .select({
+        userId: carts.userId,
+      })
+      .from(carts)
+      .where(eq(carts.id, cartItemResult[0].cartId))
+      .limit(1);
+
+    if (!cartResult.length || cartResult[0].userId !== session.user.id) {
       return { error: 'no permission to operate this cart item', success: false };
     }
 
     // 更新数量
-    await prisma.cartItem.update({
-      where: { id: cartItemId },
-      data: { quantity },
-    });
+    await db.update(cartItems).set({ quantity }).where(eq(cartItems.id, cartItemId));
 
     revalidatePath('/cart');
     return { success: true, message: 'cart updated' };
@@ -244,18 +364,20 @@ export async function clearCart() {
     }
 
     // 获取用户的购物车
-    const cart = await prisma.cart.findFirst({
-      where: { userId: session.user.id },
-    });
+    const cartResult = await db
+      .select({
+        id: carts.id,
+      })
+      .from(carts)
+      .where(eq(carts.userId, session.user.id))
+      .limit(1);
 
-    if (!cart) {
+    if (!cartResult.length) {
       return { success: true, message: 'cart is already empty' };
     }
 
     // 删除购物车中的所有商品
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id },
-    });
+    await db.delete(cartItems).where(eq(cartItems.cartId, cartResult[0].id));
 
     revalidatePath('/cart');
     revalidatePath('/checkout');

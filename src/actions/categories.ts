@@ -1,19 +1,22 @@
 'use server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { categories } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
+import { eq } from 'drizzle-orm';
 
 // 分类相关操作
 export async function getCategories() {
   try {
-    const categories = await prisma.category.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        imageUrl: true,
-      },
-    });
-    return categories;
+    const result = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        imageUrl: categories.imageUrl,
+      })
+      .from(categories)
+      .orderBy(categories.createdAt);
+
+    return result;
   } catch (error) {
     return [];
   }
@@ -21,14 +24,17 @@ export async function getCategories() {
 
 export async function getCategory(id: string) {
   try {
-    const category = await prisma.category.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        imageUrl: true,
-      },
-    });
+    const result = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        imageUrl: categories.imageUrl,
+      })
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+
+    const category = result[0];
 
     if (!category) {
       return { success: false, error: '分类不存在' };
@@ -48,12 +54,13 @@ interface CreateCategoryInput {
 
 export async function createCategory(input: CreateCategoryInput) {
   try {
-    const category = await prisma.category.create({
-      data: {
+    const [category] = await db
+      .insert(categories)
+      .values({
         name: input.name,
         imageUrl: input.imageUrl,
-      },
-    });
+      })
+      .returning();
 
     revalidatePath('/dashboard/categories');
     return { success: true, data: category };
@@ -65,10 +72,8 @@ export async function createCategory(input: CreateCategoryInput) {
 
 export async function updateCategory(id: string, name: string) {
   try {
-    const category = await prisma.category.update({
-      where: { id },
-      data: { name },
-    });
+    const [category] = await db.update(categories).set({ name }).where(eq(categories.id, id)).returning();
+
     revalidatePath('/dashboard/categories');
     return { success: true, data: category };
   } catch (error) {
@@ -78,9 +83,8 @@ export async function updateCategory(id: string, name: string) {
 
 export async function deleteCategory(id: string) {
   try {
-    await prisma.category.delete({
-      where: { id },
-    });
+    await db.delete(categories).where(eq(categories.id, id));
+
     revalidatePath('/dashboard/categories');
     return { success: true };
   } catch (error) {
@@ -90,8 +94,9 @@ export async function deleteCategory(id: string) {
 
 export async function getCategoriesCount() {
   try {
-    const count = await prisma.category.count();
-    return count;
+    const result = await db.select({ count: categories.id }).from(categories).limit(1);
+
+    return result[0]?.count ? 1 : 0;
   } catch (error) {
     console.error('获取分类数量失败:', error);
     return 0;

@@ -1,7 +1,9 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { products, categories, images, productsToColors, productsToSizes } from '@/db/schema';
 import { Product } from '@/lib/types';
+import { eq, and, desc } from 'drizzle-orm';
 
 /**
  * 获取特色商品列表
@@ -11,37 +13,57 @@ import { Product } from '@/lib/types';
 export async function getFeaturedProducts(limit: number = 4): Promise<Product[]> {
   try {
     // 从数据库获取特色商品
-    const products = await prisma.product.findMany({
-      where: {
-        isFeatured: true,
-        isArchived: false, // 不包括已归档商品
-      },
-      include: {
-        category: true,
-        images: true,
-        colors: true,
-        sizes: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-    });
+    const featuredProducts = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        price: products.price,
+        categoryId: products.categoryId,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .where(and(eq(products.isFeatured, true), eq(products.isArchived, false)))
+      .orderBy(desc(products.createdAt))
+      .limit(limit);
 
-    // 格式化数据以符合Product接口
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      images: product.images.map((image) => image.url),
-      category: product.category.name,
-      inStock: true, // 假设所有商品都有库存
-      rating: 5, // 默认评分
-      reviews: 0, // 默认评论数
-      discount: 0, // 默认无折扣
-      freeShipping: false, // 默认不提供免费配送
-    }));
+    // 获取每个商品的关联数据
+    const productsWithRelations = await Promise.all(
+      featuredProducts.map(async (product) => {
+        // 获取分类
+        const categoryResult = await db
+          .select({
+            name: categories.name,
+          })
+          .from(categories)
+          .where(eq(categories.id, product.categoryId))
+          .limit(1);
+
+        // 获取图片
+        const imageResult = await db
+          .select({
+            url: images.url,
+          })
+          .from(images)
+          .where(eq(images.productId, product.id));
+
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          images: imageResult.map((img) => img.url),
+          category: categoryResult.length ? categoryResult[0].name : '',
+          inStock: true, // 假设所有商品都有库存
+          rating: 5, // 默认评分
+          reviews: 0, // 默认评论数
+          discount: 0, // 默认无折扣
+          freeShipping: false, // 默认不提供免费配送
+        };
+      })
+    );
+
+    return productsWithRelations;
   } catch (error) {
     console.error('获取特色商品失败:', error);
     return [];

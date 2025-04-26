@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { products, categories, colors, sizes, images, productsToColors, productsToSizes } from '@/db/schema';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 
 const productFormSchema = z.object({
   name: z.string().min(1, {
@@ -35,26 +37,89 @@ export type ProductFormType = z.infer<typeof productFormSchema>;
 
 export async function getProduct(id: string) {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        images: true,
-        colors: true,
-        sizes: true,
-      },
-    });
+    const product = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        price: products.price,
+        isFeatured: products.isFeatured,
+        isArchived: products.isArchived,
+        categoryId: products.categoryId,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+      })
+      .from(products)
+      .where(eq(products.id, id))
+      .limit(1);
 
-    if (!product) {
+    if (!product || product.length === 0) {
       return null;
     }
 
+    const productData = product[0];
+
+    // 获取分类信息
+    const categoryData = await db.select().from(categories).where(eq(categories.id, productData.categoryId)).limit(1);
+
+    // 获取图片
+    const imageData = await db
+      .select({
+        id: images.id,
+        url: images.url,
+      })
+      .from(images)
+      .where(eq(images.productId, id));
+
+    // 获取颜色
+    const colorIds = await db
+      .select({
+        colorId: productsToColors.colorId,
+      })
+      .from(productsToColors)
+      .where(eq(productsToColors.productId, id));
+
+    const colorData = await db
+      .select()
+      .from(colors)
+      .where(
+        colorIds.length > 0
+          ? inArray(
+              colors.id,
+              colorIds.map((c) => c.colorId)
+            )
+          : undefined
+      );
+
+    // 获取尺寸
+    const sizeIds = await db
+      .select({
+        sizeId: productsToSizes.sizeId,
+      })
+      .from(productsToSizes)
+      .where(eq(productsToSizes.productId, id));
+
+    const sizeData = await db
+      .select()
+      .from(sizes)
+      .where(
+        sizeIds.length > 0
+          ? inArray(
+              sizes.id,
+              sizeIds.map((s) => s.sizeId)
+            )
+          : undefined
+      );
+
     return {
-      ...product,
-      price: product.price.toString(),
-      colorIds: product.colors.map((color) => color.id),
-      sizeIds: product.sizes.map((size) => size.id),
-      images: product.images.map((image) => image.url),
+      ...productData,
+      price: productData.price.toString(),
+      category: categoryData[0] || null,
+      images: imageData.map((img) => img.url),
+      colors: colorData,
+      sizes: sizeData,
+      colorIds: colorData.map((color) => color.id),
+      sizeIds: sizeData.map((size) => size.id),
     };
   } catch (error) {
     console.error('获取商品失败:', error);
@@ -70,49 +135,78 @@ export async function updateProduct(id: string, data: ProductFormType) {
   }
 
   try {
-    const { name, description, price, categoryId, colorIds, sizeIds, images, isFeatured, isArchived } =
-      validatedFields.data;
+    const {
+      name,
+      description,
+      price,
+      categoryId,
+      colorIds,
+      sizeIds,
+      images: imageUrls,
+      isFeatured,
+      isArchived,
+    } = validatedFields.data;
 
     // 查找现有的图片
-    const existingImages = await prisma.image.findMany({
-      where: { productId: id },
-    });
+    const existingImages = await db
+      .select({
+        id: images.id,
+        url: images.url,
+      })
+      .from(images)
+      .where(eq(images.productId, id));
 
-    // 删除不再使用的图片
-    const imagesToDelete = existingImages.filter((image) => !images.includes(image.url));
-    for (const image of imagesToDelete) {
-      await prisma.image.delete({
-        where: { id: image.id },
-      });
-    }
-
-    // 添加新图片
-    const existingUrls = existingImages.map((image) => image.url);
-    const newImages = images.filter((url) => !existingUrls.includes(url));
-
-    // 更新商品
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
+    // 更新商品基本信息
+    await db
+      .update(products)
+      .set({
         name,
         description,
         price: parseFloat(price),
         categoryId,
         isFeatured,
         isArchived,
-        colors: {
-          set: [], // 先清空关联
-          connect: colorIds.map((id) => ({ id })),
-        },
-        sizes: {
-          set: [], // 先清空关联
-          connect: sizeIds.map((id) => ({ id })),
-        },
-        images: {
-          create: newImages.map((url) => ({ url })),
-        },
-      },
-    });
+      })
+      .where(eq(products.id, id));
+
+    // 删除不再使用的图片
+    const imagesToDelete = existingImages.filter((image) => !imageUrls.includes(image.url));
+    for (const image of imagesToDelete) {
+      await db.delete(images).where(eq(images.id, image.id));
+    }
+
+    // 添加新图片
+    const existingUrls = existingImages.map((image) => image.url);
+    const newImages = imageUrls.filter((url) => !existingUrls.includes(url));
+
+    for (const url of newImages) {
+      await db.insert(images).values({
+        productId: id,
+        url,
+      });
+    }
+
+    // 更新颜色关联
+    await db.delete(productsToColors).where(eq(productsToColors.productId, id));
+
+    for (const colorId of colorIds) {
+      await db.insert(productsToColors).values({
+        productId: id,
+        colorId,
+      });
+    }
+
+    // 更新尺寸关联
+    await db.delete(productsToSizes).where(eq(productsToSizes.productId, id));
+
+    for (const sizeId of sizeIds) {
+      await db.insert(productsToSizes).values({
+        productId: id,
+        sizeId,
+      });
+    }
+
+    return { success: true };
   } catch (error) {
     return {
       error: '更新商品失败。请稍后重试。',
@@ -122,19 +216,87 @@ export async function updateProduct(id: string, data: ProductFormType) {
 
 export async function getProducts() {
   try {
-    const products = await prisma.product.findMany({
-      include: {
-        category: true,
-        images: true,
-        colors: true,
-        sizes: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const productsData = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        price: products.price,
+        isFeatured: products.isFeatured,
+        isArchived: products.isArchived,
+        categoryId: products.categoryId,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .orderBy(desc(products.createdAt));
 
-    return products;
+    // 获取每个产品的附加信息
+    const productsWithRelations = await Promise.all(
+      productsData.map(async (product) => {
+        // 获取分类
+        const categoryResult = await db.select().from(categories).where(eq(categories.id, product.categoryId)).limit(1);
+
+        // 获取图片
+        const imagesResult = await db
+          .select({
+            url: images.url,
+          })
+          .from(images)
+          .where(eq(images.productId, product.id));
+
+        // 获取颜色
+        const colorIds = await db
+          .select({
+            colorId: productsToColors.colorId,
+          })
+          .from(productsToColors)
+          .where(eq(productsToColors.productId, product.id));
+
+        const colorsResult =
+          colorIds.length > 0
+            ? await db
+                .select()
+                .from(colors)
+                .where(
+                  inArray(
+                    colors.id,
+                    colorIds.map((c) => c.colorId)
+                  )
+                )
+            : [];
+
+        // 获取尺寸
+        const sizeIds = await db
+          .select({
+            sizeId: productsToSizes.sizeId,
+          })
+          .from(productsToSizes)
+          .where(eq(productsToSizes.productId, product.id));
+
+        const sizesResult =
+          sizeIds.length > 0
+            ? await db
+                .select()
+                .from(sizes)
+                .where(
+                  inArray(
+                    sizes.id,
+                    sizeIds.map((s) => s.sizeId)
+                  )
+                )
+            : [];
+
+        return {
+          ...product,
+          category: categoryResult[0] || null,
+          images: imagesResult,
+          colors: colorsResult,
+          sizes: sizesResult,
+        };
+      })
+    );
+
+    return productsWithRelations;
   } catch (error) {
     console.error('获取商品列表失败:', error);
     return [];
@@ -143,11 +305,7 @@ export async function getProducts() {
 
 export async function getCategories() {
   try {
-    return await prisma.category.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    return await db.select().from(categories).orderBy(categories.name);
   } catch (error) {
     console.error('获取分类失败:', error);
     return [];
@@ -156,11 +314,7 @@ export async function getCategories() {
 
 export async function getColors() {
   try {
-    return await prisma.color.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    return await db.select().from(colors).orderBy(colors.name);
   } catch (error) {
     console.error('获取颜色失败:', error);
     return [];
@@ -169,11 +323,7 @@ export async function getColors() {
 
 export async function getSizes() {
   try {
-    return await prisma.size.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    return await db.select().from(sizes).orderBy(sizes.name);
   } catch (error) {
     console.error('获取尺寸失败:', error);
     return [];
@@ -188,92 +338,127 @@ export async function createProduct(data: ProductFormType) {
   }
 
   try {
-    const { name, description, price, categoryId, colorIds, sizeIds, images, isFeatured, isArchived } =
-      validatedFields.data;
+    const {
+      name,
+      description,
+      price,
+      categoryId,
+      colorIds,
+      sizeIds,
+      images: imageUrls,
+      isFeatured,
+      isArchived,
+    } = validatedFields.data;
 
-    const product = await prisma.product.create({
-      data: {
+    // 创建商品
+    const [product] = await db
+      .insert(products)
+      .values({
         name,
         description,
         price: parseFloat(price),
         categoryId,
         isFeatured,
         isArchived,
-        colors: {
-          connect: colorIds.map((id) => ({ id })),
-        },
-        sizes: {
-          connect: sizeIds.map((id) => ({ id })),
-        },
-        images: {
-          create: images.map((url) => ({ url })),
-        },
-      },
-    });
+      })
+      .returning({ id: products.id });
+
+    // 添加图片
+    for (const url of imageUrls) {
+      await db.insert(images).values({
+        productId: product.id,
+        url,
+      });
+    }
+
+    // 添加颜色关联
+    for (const colorId of colorIds) {
+      await db.insert(productsToColors).values({
+        productId: product.id,
+        colorId,
+      });
+    }
+
+    // 添加尺寸关联
+    for (const sizeId of sizeIds) {
+      await db.insert(productsToSizes).values({
+        productId: product.id,
+        sizeId,
+      });
+    }
+
+    return { success: true, productId: product.id };
   } catch (error) {
-    throw new Error('测试错误');
+    console.error('创建商品失败:', error);
+    return { error: '创建商品失败' };
   }
 }
 
 export async function deleteProduct(id: string) {
   try {
-    // 先删除与商品相关的所有图片
-    await prisma.image.deleteMany({
-      where: { productId: id },
-    });
+    // 删除相关联的图片
+    await db.delete(images).where(eq(images.productId, id));
+
+    // 删除颜色关联
+    await db.delete(productsToColors).where(eq(productsToColors.productId, id));
+
+    // 删除尺寸关联
+    await db.delete(productsToSizes).where(eq(productsToSizes.productId, id));
 
     // 删除商品
-    await prisma.product.delete({
-      where: { id },
-    });
+    await db.delete(products).where(eq(products.id, id));
 
     revalidatePath('/dashboard/products');
-    return { success: true, message: '商品已成功删除' };
+    return { success: true };
   } catch (error) {
     console.error('删除商品失败:', error);
-    return { success: false, message: '删除商品失败，请稍后重试' };
+    return { success: false, error: '删除商品失败' };
   }
 }
 
-// 获取产品数量
 export async function getProductsCount() {
   try {
-    const count = await prisma.product.count();
-    return count;
+    const result = await db.select({ count: products.id }).from(products);
+
+    return result.length;
   } catch (error) {
     console.error('获取商品数量失败:', error);
     return 0;
   }
 }
 
-// 获取热门产品
 export async function getPopularProducts(limit = 5) {
   try {
-    // 这里简化处理，实际应该基于订单量或其他指标计算热门程度
-    const products = await prisma.product.findMany({
-      include: {
-        images: true,
-        category: true,
-        orderItems: true,
-      },
-      orderBy: {
-        orderItems: {
-          _count: 'desc',
-        },
-      },
-      take: limit,
-    });
+    const productsData = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        price: products.price,
+      })
+      .from(products)
+      .where(and(eq(products.isArchived, false), eq(products.isFeatured, true)))
+      .limit(limit);
 
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      imageUrl: product.images[0]?.url || null,
-      category: product.category?.name || '',
-      orderCount: product.orderItems.length,
-    }));
+    // 获取每个产品的图片
+    const productsWithImages = await Promise.all(
+      productsData.map(async (product) => {
+        const imagesResult = await db
+          .select({
+            url: images.url,
+          })
+          .from(images)
+          .where(eq(images.productId, product.id));
+
+        return {
+          ...product,
+          images: imagesResult,
+        };
+      })
+    );
+
+    return productsWithImages;
   } catch (error) {
-    console.error('获取热门产品失败:', error);
+    console.error('获取热门商品失败:', error);
     return [];
   }
 }

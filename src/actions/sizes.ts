@@ -1,21 +1,22 @@
 'use server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { sizes } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
+import { eq } from 'drizzle-orm';
 
 // 尺寸相关操作
 export async function getSizes() {
   try {
-    const sizes = await prisma.size.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
+    const result = await db
+      .select({
+        id: sizes.id,
+        name: sizes.name,
+        value: sizes.value,
+      })
+      .from(sizes)
+      .orderBy(sizes.name);
 
-    return sizes.map((size) => ({
-      id: size.id,
-      name: size.name,
-      value: size.value,
-    }));
+    return result;
   } catch (error) {
     console.error('获取尺寸失败:', error);
     return [];
@@ -24,9 +25,17 @@ export async function getSizes() {
 
 export async function getSize(id: string) {
   try {
-    const size = await prisma.size.findUnique({
-      where: { id },
-    });
+    const result = await db
+      .select({
+        id: sizes.id,
+        name: sizes.name,
+        value: sizes.value,
+      })
+      .from(sizes)
+      .where(eq(sizes.id, id))
+      .limit(1);
+
+    const size = result[0];
 
     if (!size) {
       return { success: false, error: '尺寸不存在' };
@@ -34,11 +43,7 @@ export async function getSize(id: string) {
 
     return {
       success: true,
-      size: {
-        id: size.id,
-        name: size.name,
-        value: size.value,
-      },
+      size,
     };
   } catch (error) {
     console.error('获取尺寸失败:', error);
@@ -48,12 +53,14 @@ export async function getSize(id: string) {
 
 export async function createSize(data: { name: string; value: string }) {
   try {
-    const size = await prisma.size.create({
-      data: {
+    const [size] = await db
+      .insert(sizes)
+      .values({
         name: data.name,
         value: data.value,
-      },
-    });
+      })
+      .returning();
+
     revalidatePath('/dashboard/sizes');
     return { success: true, data: size };
   } catch (error) {
@@ -63,13 +70,15 @@ export async function createSize(data: { name: string; value: string }) {
 
 export async function updateSize(id: string, data: { name: string; value: string }) {
   try {
-    const size = await prisma.size.update({
-      where: { id },
-      data: {
+    const [size] = await db
+      .update(sizes)
+      .set({
         name: data.name,
         value: data.value,
-      },
-    });
+      })
+      .where(eq(sizes.id, id))
+      .returning();
+
     revalidatePath('/dashboard/sizes');
     return { success: true, data: size };
   } catch (error) {
@@ -79,9 +88,8 @@ export async function updateSize(id: string, data: { name: string; value: string
 
 export async function deleteSize(id: string) {
   try {
-    await prisma.size.delete({
-      where: { id },
-    });
+    await db.delete(sizes).where(eq(sizes.id, id));
+
     revalidatePath('/dashboard/sizes');
     return { success: true };
   } catch (error) {

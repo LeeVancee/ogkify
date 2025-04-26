@@ -1,7 +1,9 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { products, categories, images, colors, sizes, productsToColors, productsToSizes } from '@/db/schema';
 import { Product } from '@/lib/types';
+import { and, eq, gte, lte, desc, asc, or, like, inArray } from 'drizzle-orm';
 
 export interface FilterOptions {
   category?: string;
@@ -25,133 +27,162 @@ export async function getFilteredProducts(
   options: FilterOptions = {}
 ): Promise<{ products: Product[]; total: number }> {
   try {
-    // 构建查询条件
-    const where: any = {
-      isArchived: false, // 不包括已归档商品
-    };
-
-    // 分类筛选
-    if (options.category) {
-      where.category = {
-        name: options.category, // 通过分类名称筛选而不是ID
-      };
-    }
-
-    // 特色商品筛选
-    if (options.featured) {
-      where.isFeatured = true;
-    }
-
-    // 价格范围筛选
-    if (options.minPrice !== undefined || options.maxPrice !== undefined) {
-      where.price = {};
-
-      if (options.minPrice !== undefined) {
-        where.price.gte = options.minPrice;
-      }
-
-      if (options.maxPrice !== undefined) {
-        where.price.lte = options.maxPrice;
-      }
-    }
-
-    // 颜色筛选
-    if (options.colors && options.colors.length > 0) {
-      where.colors = {
-        some: {
-          name: {
-            in: options.colors, // 通过颜色名称筛选而不是ID
-          },
-        },
-      };
-    }
-
-    // 尺寸筛选
-    if (options.sizes && options.sizes.length > 0) {
-      where.sizes = {
-        some: {
-          value: {
-            in: options.sizes, // 通过尺寸值筛选而不是ID
-          },
-        },
-      };
-    }
-
-    // 搜索查询
-    if (options.search) {
-      where.OR = [
-        {
-          name: {
-            contains: options.search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          description: {
-            contains: options.search,
-            mode: 'insensitive',
-          },
-        },
-      ];
-    }
-
-    // 处理分页
     const page = options.page || 1;
     const limit = options.limit || 12;
     const skip = (page - 1) * limit;
 
-    // 处理排序
-    let orderBy: any = { createdAt: 'desc' }; // 默认按创建时间降序
+    // 构建初始查询 - 获取非归档产品
+    let productsData = await db.select().from(products).where(eq(products.isArchived, false));
 
-    if (options.sort) {
-      switch (options.sort) {
-        case 'price-asc':
-          orderBy = { price: 'asc' };
-          break;
-        case 'price-desc':
-          orderBy = { price: 'desc' };
-          break;
-        case 'newest':
-          orderBy = { createdAt: 'desc' };
-          break;
-        case 'featured':
-        default:
-          // 特色商品优先，然后按创建时间降序
-          orderBy = [{ isFeatured: 'desc' }, { createdAt: 'desc' }];
+    // 应用过滤条件
+
+    // 1. 过滤特色商品
+    if (options.featured) {
+      productsData = productsData.filter((p) => p.isFeatured);
+    }
+
+    // 2. 过滤价格范围
+    if (options.minPrice !== undefined) {
+      productsData = productsData.filter((p) => p.price >= options.minPrice!);
+    }
+
+    if (options.maxPrice !== undefined) {
+      productsData = productsData.filter((p) => p.price <= options.maxPrice!);
+    }
+
+    // 3. 搜索
+    if (options.search) {
+      const searchLower = options.search.toLowerCase();
+      productsData = productsData.filter(
+        (p) => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // 4. 分类过滤
+    if (options.category) {
+      // 获取分类ID
+      const categoryResult = await db.select().from(categories).where(eq(categories.name, options.category)).limit(1);
+
+      if (categoryResult.length > 0) {
+        const categoryId = categoryResult[0].id;
+        productsData = productsData.filter((p) => p.categoryId === categoryId);
       }
     }
 
-    // 获取商品总数
-    const total = await prisma.product.count({ where });
+    // 5. 颜色过滤
+    if (options.colors && options.colors.length > 0) {
+      // 获取颜色ID
+      const colorResults = await db.select().from(colors).where(inArray(colors.name, options.colors));
 
-    // 获取商品列表
-    const products = await prisma.product.findMany({
-      where,
-      include: {
-        category: true,
-        images: true,
-        colors: true,
-        sizes: true,
-      },
-      orderBy,
-      skip,
-      take: limit,
-    });
+      if (colorResults.length > 0) {
+        const colorIds = colorResults.map((c) => c.id);
 
-    // 格式化数据以符合Product接口
-    const formattedProducts = products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      images: product.images.map((image) => image.url),
-      category: product.category.name,
-      inStock: true, // 假设所有商品都有库存
-      rating: 5, // 默认评分
-      reviews: 0, // 默认评论数
-      discount: 0, // 默认无折扣
-      freeShipping: false, // 默认不提供免费配送
-    }));
+        // 获取拥有这些颜色的产品ID
+        const productsWithColors = await db
+          .select()
+          .from(productsToColors)
+          .where(inArray(productsToColors.colorId, colorIds));
+
+        const productIdsWithColors = new Set(productsWithColors.map((p) => p.productId));
+
+        // 过滤产品
+        productsData = productsData.filter((p) => productIdsWithColors.has(p.id));
+      }
+    }
+
+    // 6. 尺寸过滤
+    if (options.sizes && options.sizes.length > 0) {
+      // 获取尺寸ID
+      const sizeResults = await db.select().from(sizes).where(inArray(sizes.value, options.sizes));
+
+      if (sizeResults.length > 0) {
+        const sizeIds = sizeResults.map((s) => s.id);
+
+        // 获取拥有这些尺寸的产品ID
+        const productsWithSizes = await db
+          .select()
+          .from(productsToSizes)
+          .where(inArray(productsToSizes.sizeId, sizeIds));
+
+        const productIdsWithSizes = new Set(productsWithSizes.map((p) => p.productId));
+
+        // 过滤产品
+        productsData = productsData.filter((p) => productIdsWithSizes.has(p.id));
+      }
+    }
+
+    // 7. 排序
+    if (options.sort) {
+      switch (options.sort) {
+        case 'price-asc':
+          productsData = productsData.sort((a, b) => a.price - b.price);
+          break;
+        case 'price-desc':
+          productsData = productsData.sort((a, b) => b.price - a.price);
+          break;
+        case 'newest':
+          productsData = productsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          break;
+        case 'featured':
+          productsData = productsData.sort((a, b) => {
+            // 特色商品优先
+            if (a.isFeatured !== b.isFeatured) {
+              return a.isFeatured ? -1 : 1;
+            }
+            // 然后按创建时间降序
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
+          break;
+        default:
+          // 默认按创建时间降序
+          productsData = productsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+    } else {
+      // 默认按创建时间降序
+      productsData = productsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    // 获取总数
+    const total = productsData.length;
+
+    // 分页
+    const paginatedProducts = productsData.slice(skip, skip + limit);
+
+    // 获取每个产品的附加信息
+    const formattedProducts = await Promise.all(
+      paginatedProducts.map(async (product) => {
+        // 获取分类
+        const categoryResult = await db
+          .select({
+            name: categories.name,
+          })
+          .from(categories)
+          .where(eq(categories.id, product.categoryId))
+          .limit(1);
+
+        // 获取图片
+        const imageResults = await db
+          .select({
+            url: images.url,
+          })
+          .from(images)
+          .where(eq(images.productId, product.id));
+
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          images: imageResults.map((img) => img.url),
+          category: categoryResult.length ? categoryResult[0].name : '',
+          inStock: true, // 假设所有商品都有库存
+          rating: 5, // 默认评分
+          reviews: 0, // 默认评论数
+          discount: 0, // 默认无折扣
+          freeShipping: false, // 默认不提供免费配送
+        };
+      })
+    );
 
     return {
       products: formattedProducts,

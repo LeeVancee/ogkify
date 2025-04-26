@@ -1,10 +1,11 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { orders, orderItems, products, user, colors, sizes, images } from '@/db/schema';
 import { getSession } from './getSession';
 import { formatPrice } from '@/lib/utils';
 import { stripe, formatAmountForStripe } from '@/lib/stripe';
-import { OrderStatus } from '@prisma/client';
+import { eq, desc, and, gte, lt } from 'drizzle-orm';
 
 // 获取用户所有订单
 export async function getUserOrders() {
@@ -14,62 +15,113 @@ export async function getUserOrders() {
       return { success: false, orders: [] };
     }
 
-    const orders = await prisma.order.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-              },
-            },
-            color: true,
-            size: true,
-          },
-        },
-        user: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // 获取用户订单
+    const userOrders = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.userId, session.user.id))
+      .orderBy(desc(orders.createdAt));
 
-    // 转换为前端友好的格式
-    const formattedOrders = orders.map((order) => ({
-      id: order.id,
-      orderNumber: order.orderNumber,
-      customer: order.user?.name,
-      email: order.user?.email,
-      createdAt: order.createdAt.toISOString(),
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-      totalAmount: order.totalAmount,
-      totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
-      firstItemImage: order.items[0]?.product?.images[0]?.url || null,
-      items: order.items.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        productName: item.product.name,
-        quantity: item.quantity,
-        price: item.price,
-        imageUrl: item.product.images[0]?.url || null,
-        color: item.color
-          ? {
-              name: item.color.name,
-              value: item.color.value,
+    // 格式化订单以及获取关联数据
+    const formattedOrders = await Promise.all(
+      userOrders.map(async (order) => {
+        // 获取订单项
+        const orderItemsData = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+
+        // 获取用户信息
+        const userData = await db.select().from(user).where(eq(user.id, order.userId)).limit(1);
+
+        // 获取订单项的详细信息
+        const itemsWithDetails = await Promise.all(
+          orderItemsData.map(async (item) => {
+            // 获取产品信息
+            const productData = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+
+            if (!productData.length) {
+              return null;
             }
-          : null,
-        size: item.size
-          ? {
-              name: item.size.name,
-              value: item.size.value,
+
+            // 获取产品图片
+            const productImages = await db
+              .select({
+                url: images.url,
+              })
+              .from(images)
+              .where(eq(images.productId, item.productId));
+
+            // 获取颜色信息
+            let colorData = null;
+            if (item.colorId) {
+              const colorResult = await db.select().from(colors).where(eq(colors.id, item.colorId)).limit(1);
+
+              if (colorResult.length) {
+                colorData = colorResult[0];
+              }
             }
-          : null,
-      })),
-    }));
+
+            // 获取尺寸信息
+            let sizeData = null;
+            if (item.sizeId) {
+              const sizeResult = await db.select().from(sizes).where(eq(sizes.id, item.sizeId)).limit(1);
+
+              if (sizeResult.length) {
+                sizeData = sizeResult[0];
+              }
+            }
+
+            return {
+              id: item.id,
+              productId: item.productId,
+              productName: productData[0]?.name,
+              quantity: item.quantity,
+              price: item.price,
+              imageUrl: productImages[0]?.url || null,
+              color: colorData
+                ? {
+                    name: colorData.name,
+                    value: colorData.value,
+                  }
+                : null,
+              size: sizeData
+                ? {
+                    name: sizeData.name,
+                    value: sizeData.value,
+                  }
+                : null,
+            };
+          })
+        );
+
+        // 过滤掉空值
+        const validItems = itemsWithDetails.filter(Boolean) as {
+          id: string;
+          productId: string;
+          productName: string | undefined;
+          quantity: number;
+          price: number;
+          imageUrl: string | null;
+          color: { name: string; value: string } | null;
+          size: { name: string; value: string } | null;
+        }[];
+
+        // 获取第一个商品图片（如果有）
+        const firstItemImage = validItems.length > 0 && validItems[0] ? validItems[0].imageUrl : null;
+
+        return {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          customer: userData[0]?.name,
+          email: userData[0]?.email,
+          createdAt: order.createdAt.toISOString(),
+          status: order.status,
+          paymentStatus: order.paymentStatus,
+          totalAmount: order.totalAmount,
+          totalItems: validItems.reduce((sum, item) => sum + item.quantity, 0),
+          firstItemImage,
+          items: validItems,
+        };
+      })
+    );
 
     return { success: true, orders: formattedOrders };
   } catch (error) {
@@ -88,33 +140,105 @@ export async function getOrderDetails(orderId: string) {
     }
 
     // 查询订单，确保订单属于当前登录用户
-    const order = await prisma.order.findUnique({
-      where: {
-        id: orderId,
-        userId: session.user.id,
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-              },
-            },
-            color: true,
-            size: true,
-          },
-        },
-      },
-    });
+    const orderResult = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, session.user.id)))
+      .limit(1);
 
-    if (!order) {
+    if (!orderResult.length) {
       return { error: '找不到订单', success: false };
     }
 
-    // 格式化订单详情
-    const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    const order = orderResult[0];
 
+    // 获取订单项
+    const orderItemsData = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+
+    // 获取每个订单项的详细信息
+    const formattedItems = await Promise.all(
+      orderItemsData.map(async (item) => {
+        // 获取产品信息
+        const productData = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+
+        if (!productData.length) {
+          return null;
+        }
+
+        // 获取产品图片
+        const productImages = await db
+          .select({
+            url: images.url,
+          })
+          .from(images)
+          .where(eq(images.productId, item.productId));
+
+        // 获取颜色信息
+        let colorData = null;
+        if (item.colorId) {
+          const colorResult = await db.select().from(colors).where(eq(colors.id, item.colorId)).limit(1);
+
+          if (colorResult.length) {
+            colorData = colorResult[0];
+          }
+        }
+
+        // 获取尺寸信息
+        let sizeData = null;
+        if (item.sizeId) {
+          const sizeResult = await db.select().from(sizes).where(eq(sizes.id, item.sizeId)).limit(1);
+
+          if (sizeResult.length) {
+            sizeData = sizeResult[0];
+          }
+        }
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          productName: productData[0].name,
+          productDescription: productData[0].description,
+          quantity: item.quantity,
+          price: item.price,
+          priceFormatted: formatPrice(item.price),
+          totalPrice: item.price * item.quantity,
+          totalPriceFormatted: formatPrice(item.price * item.quantity),
+          imageUrl: productImages[0]?.url || null,
+          color: colorData
+            ? {
+                name: colorData.name,
+                value: colorData.value,
+              }
+            : null,
+          size: sizeData
+            ? {
+                name: sizeData.name,
+                value: sizeData.value,
+              }
+            : null,
+        };
+      })
+    );
+
+    // 过滤掉空值
+    const validItems = formattedItems.filter(Boolean) as {
+      id: string;
+      productId: string;
+      productName: string;
+      productDescription: string;
+      quantity: number;
+      price: number;
+      priceFormatted: string;
+      totalPrice: number;
+      totalPriceFormatted: string;
+      imageUrl: string | null;
+      color: { name: string; value: string } | null;
+      size: { name: string; value: string } | null;
+    }[];
+
+    const totalItems = validItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    // 格式化订单详情
     const formattedOrder = {
       id: order.id,
       orderNumber: order.orderNumber,
@@ -136,30 +260,7 @@ export async function getOrderDetails(orderId: string) {
       shippingAddress: order.shippingAddress,
       phone: order.phone,
       paymentMethod: order.paymentMethod,
-      items: order.items.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        productName: item.product.name,
-        productDescription: item.product.description,
-        quantity: item.quantity,
-        price: item.price,
-        priceFormatted: formatPrice(item.price),
-        totalPrice: item.price * item.quantity,
-        totalPriceFormatted: formatPrice(item.price * item.quantity),
-        imageUrl: item.product.images[0]?.url || null,
-        color: item.color
-          ? {
-              name: item.color.name,
-              value: item.color.value,
-            }
-          : null,
-        size: item.size
-          ? {
-              name: item.size.name,
-              value: item.size.value,
-            }
-          : null,
-      })),
+      items: validItems,
     };
 
     return {
@@ -202,59 +303,95 @@ export async function getUnpaidOrders() {
       return { success: false, orders: [] };
     }
 
-    const orders = await prisma.order.findMany({
-      where: {
-        userId: session.user.id,
-        paymentStatus: 'UNPAID',
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-              },
-            },
-            color: true,
-            size: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // 获取用户未支付订单
+    const unpaidOrders = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.userId, session.user.id), eq(orders.paymentStatus, 'UNPAID')))
+      .orderBy(desc(orders.createdAt));
 
-    // 使用相同的转换逻辑
-    const formattedOrders = orders.map((order) => ({
-      id: order.id,
-      orderNumber: order.orderNumber,
-      createdAt: order.createdAt.toISOString(),
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-      totalAmount: order.totalAmount,
-      firstItemImage: order.items[0]?.product?.images[0]?.url || null,
-      items: order.items.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        productName: item.product.name,
-        quantity: item.quantity,
-        price: item.price,
-        imageUrl: item.product.images[0]?.url || null,
-        color: item.color
-          ? {
-              name: item.color.name,
-              value: item.color.value,
+    // 格式化订单以及获取关联数据
+    const formattedOrders = await Promise.all(
+      unpaidOrders.map(async (order) => {
+        // 获取订单项
+        const orderItemsData = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+
+        // 获取订单项的详细信息
+        const itemsWithDetails = await Promise.all(
+          orderItemsData.map(async (item) => {
+            // 获取产品信息
+            const productData = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+
+            if (!productData.length) {
+              return null;
             }
-          : null,
-        size: item.size
-          ? {
-              name: item.size.name,
-              value: item.size.value,
+
+            // 获取产品图片
+            const productImages = await db
+              .select({
+                url: images.url,
+              })
+              .from(images)
+              .where(eq(images.productId, item.productId));
+
+            // 获取颜色信息
+            let colorData = null;
+            if (item.colorId) {
+              const colorResult = await db.select().from(colors).where(eq(colors.id, item.colorId)).limit(1);
+
+              if (colorResult.length) {
+                colorData = colorResult[0];
+              }
             }
-          : null,
-      })),
-    }));
+
+            // 获取尺寸信息
+            let sizeData = null;
+            if (item.sizeId) {
+              const sizeResult = await db.select().from(sizes).where(eq(sizes.id, item.sizeId)).limit(1);
+
+              if (sizeResult.length) {
+                sizeData = sizeResult[0];
+              }
+            }
+
+            return {
+              id: item.id,
+              productId: item.productId,
+              productName: productData[0]?.name,
+              quantity: item.quantity,
+              price: item.price,
+              imageUrl: productImages[0]?.url || null,
+              color: colorData
+                ? {
+                    name: colorData.name,
+                    value: colorData.value,
+                  }
+                : null,
+              size: sizeData
+                ? {
+                    name: sizeData.name,
+                    value: sizeData.value,
+                  }
+                : null,
+            };
+          })
+        );
+
+        // 过滤掉空值
+        const validItems = itemsWithDetails.filter(Boolean);
+
+        return {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          createdAt: order.createdAt.toISOString(),
+          status: order.status,
+          paymentStatus: order.paymentStatus,
+          totalAmount: order.totalAmount,
+          firstItemImage: validItems.length > 0 && validItems[0] ? validItems[0].imageUrl : null,
+          items: validItems,
+        };
+      })
+    );
 
     return { success: true, orders: formattedOrders };
   } catch (error) {
@@ -273,51 +410,72 @@ export async function createPaymentSession(orderId: string) {
     }
 
     // 获取订单信息
-    const order = await prisma.order.findUnique({
-      where: {
-        id: orderId,
-        userId: session.user.id,
-        paymentStatus: 'UNPAID', // 确保只能为未支付订单创建支付会话
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-              },
-            },
-            color: true,
-            size: true,
-          },
-        },
-      },
-    });
+    const orderResult = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, session.user.id), eq(orders.paymentStatus, 'UNPAID')))
+      .limit(1);
 
-    if (!order) {
+    if (!orderResult.length) {
       return { error: '找不到未支付的订单', success: false };
     }
 
-    // 构建行项目
-    const lineItems = order.items.map((item) => {
-      const productName = item.product.name;
-      const colorName = item.color?.name || '';
-      const sizeName = item.size?.name || '';
-      const variantInfo = [colorName, sizeName].filter(Boolean).join(', ');
+    const order = orderResult[0];
 
-      return {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: productName,
-            description: variantInfo ? `${variantInfo}` : undefined,
-            images: item.product.images && item.product.images.length > 0 ? [item.product.images[0]?.url] : undefined,
+    // 获取订单项
+    const orderItemsData = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+
+    // 获取每个订单项的详细信息以构建行项目
+    const lineItems = await Promise.all(
+      orderItemsData.map(async (item) => {
+        // 获取产品信息
+        const productData = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
+
+        // 获取产品图片
+        const productImages = await db
+          .select({
+            url: images.url,
+          })
+          .from(images)
+          .where(eq(images.productId, item.productId));
+
+        // 获取颜色信息
+        let colorName = '';
+        if (item.colorId) {
+          const colorResult = await db.select().from(colors).where(eq(colors.id, item.colorId)).limit(1);
+
+          if (colorResult.length) {
+            colorName = colorResult[0].name;
+          }
+        }
+
+        // 获取尺寸信息
+        let sizeName = '';
+        if (item.sizeId) {
+          const sizeResult = await db.select().from(sizes).where(eq(sizes.id, item.sizeId)).limit(1);
+
+          if (sizeResult.length) {
+            sizeName = sizeResult[0].name;
+          }
+        }
+
+        const productName = productData[0]?.name || 'Unknown Product';
+        const variantInfo = [colorName, sizeName].filter(Boolean).join(', ');
+
+        return {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: productName,
+              description: variantInfo ? `${variantInfo}` : undefined,
+              images: productImages.length > 0 ? [productImages[0].url] : undefined,
+            },
+            unit_amount: formatAmountForStripe(item.price),
           },
-          unit_amount: formatAmountForStripe(item.price),
-        },
-        quantity: item.quantity,
-      };
-    });
+          quantity: item.quantity,
+        };
+      })
+    );
 
     // 使用绝对URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -342,13 +500,13 @@ export async function createPaymentSession(orderId: string) {
     });
 
     // 更新订单的支付意向ID
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
+    await db
+      .update(orders)
+      .set({
         paymentMethod: 'Stripe',
         paymentIntent: checkoutSession.id,
-      },
-    });
+      })
+      .where(eq(orders.id, order.id));
 
     return {
       success: true,
@@ -371,41 +529,33 @@ export async function updateOrderStatus(orderId: string, status: string) {
     }
 
     // 将字符串转换为OrderStatus枚举类型
-    let orderStatus: OrderStatus;
-
+    let orderStatus: 'PENDING' | 'PAID' | 'COMPLETED' | 'CANCELLED';
     switch (status) {
       case 'PENDING':
-        orderStatus = OrderStatus.PENDING;
+        orderStatus = 'PENDING';
         break;
       case 'PROCESSING':
-        orderStatus = OrderStatus.PAID; // 在模型中，PAID对应处理中状态
+        orderStatus = 'PAID'; // 在模型中，PAID对应处理中状态
         break;
       case 'COMPLETED':
-        orderStatus = OrderStatus.COMPLETED;
+        orderStatus = 'COMPLETED';
         break;
       case 'CANCELLED':
-        orderStatus = OrderStatus.CANCELLED;
+        orderStatus = 'CANCELLED';
         break;
       default:
         return { error: '无效的订单状态', success: false };
     }
 
     // 查询订单，确保订单存在
-    const order = await prisma.order.findUnique({
-      where: {
-        id: orderId,
-      },
-    });
+    const orderResult = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
 
-    if (!order) {
+    if (!orderResult.length) {
       return { error: '找不到订单', success: false };
     }
 
-    // 更新订单状态 - 现在使用枚举类型
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: orderStatus },
-    });
+    // 更新订单状态
+    await db.update(orders).set({ status: orderStatus }).where(eq(orders.id, orderId));
 
     return {
       success: true,
@@ -420,30 +570,25 @@ export async function updateOrderStatus(orderId: string, status: string) {
 export async function getOrdersStats() {
   try {
     // 获取待处理订单数量
-    const pendingOrders = await prisma.order.count({
-      where: {
-        status: 'PENDING',
-      },
-    });
+    const pendingOrdersResult = await db.select().from(orders).where(eq(orders.status, 'PENDING'));
+
+    const pendingOrders = pendingOrdersResult.length;
 
     // 获取已完成订单数量
-    const completedOrders = await prisma.order.count({
-      where: {
-        status: 'COMPLETED',
-      },
-    });
+    const completedOrdersResult = await db.select().from(orders).where(eq(orders.status, 'COMPLETED'));
 
-    // 获取总收入 (仅计算已支付订单)
-    const paidOrders = await prisma.order.findMany({
-      where: {
-        paymentStatus: 'PAID',
-      },
-      select: {
-        totalAmount: true,
-      },
-    });
+    const completedOrders = completedOrdersResult.length;
 
-    const totalRevenue = paidOrders.reduce((total, order) => total + order.totalAmount, 0);
+    // 获取已支付订单
+    const paidOrdersResult = await db
+      .select({
+        totalAmount: orders.totalAmount,
+      })
+      .from(orders)
+      .where(eq(orders.paymentStatus, 'PAID'));
+
+    // 计算总收入
+    const totalRevenue = paidOrdersResult.reduce((total, order) => total + order.totalAmount, 0);
 
     return {
       pendingOrders,
@@ -462,40 +607,39 @@ export async function getOrdersStats() {
 
 export async function getRecentOrders(limit = 5) {
   try {
-    const recentOrders = await prisma.order.findMany({
-      take: limit,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    // 获取最近订单
+    const recentOrdersResult = await db.select().from(orders).orderBy(desc(orders.createdAt)).limit(limit);
 
-    return recentOrders.map((order) => ({
-      id: order.id,
-      orderNumber: order.orderNumber,
-      date: order.createdAt,
-      customerName: order.user?.name || 'Guest',
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-      amount: order.totalAmount,
-      itemsCount: order.items.length,
-    }));
+    // 获取订单的详细信息
+    const formattedOrders = await Promise.all(
+      recentOrdersResult.map(async (order) => {
+        // 获取用户信息
+        const userData = await db
+          .select({
+            name: user.name,
+            email: user.email,
+          })
+          .from(user)
+          .where(eq(user.id, order.userId))
+          .limit(1);
+
+        // 获取订单项
+        const orderItemsData = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+
+        return {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          date: order.createdAt,
+          customerName: userData[0]?.name || 'Guest',
+          status: order.status,
+          paymentStatus: order.paymentStatus,
+          amount: order.totalAmount,
+          itemsCount: orderItemsData.length,
+        };
+      })
+    );
+
+    return formattedOrders;
   } catch (error) {
     console.error('获取最近订单失败:', error);
     return [];
@@ -519,22 +663,16 @@ export async function getMonthlySalesData() {
         endDate = new Date(currentYear, month + 1, 1);
       }
 
-      // 查询这个月的订单
-      const monthlyOrders = await prisma.order.findMany({
-        where: {
-          createdAt: {
-            gte: startDate,
-            lt: endDate,
-          },
-          paymentStatus: 'PAID',
-        },
-        select: {
-          totalAmount: true,
-        },
-      });
+      // 查询这个月的已支付订单，使用gte和lt来替代sql标签函数
+      const monthlyOrdersResult = await db
+        .select({
+          totalAmount: orders.totalAmount,
+        })
+        .from(orders)
+        .where(and(eq(orders.paymentStatus, 'PAID'), gte(orders.createdAt, startDate), lt(orders.createdAt, endDate)));
 
       // 计算月度总收入
-      const total = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+      const total = monthlyOrdersResult.reduce((sum, order) => sum + order.totalAmount, 0);
 
       // 获取月份名称
       const monthName = `${month + 1}月`;
@@ -576,31 +714,21 @@ export async function deleteUnpaidOrder(orderId: string) {
     }
 
     // 获取订单信息，确保它是用户自己的未支付订单
-    const order = await prisma.order.findUnique({
-      where: {
-        id: orderId,
-        userId: session.user.id,
-        paymentStatus: 'UNPAID',
-      },
-    });
+    const orderResult = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, session.user.id), eq(orders.paymentStatus, 'UNPAID')))
+      .limit(1);
 
-    if (!order) {
+    if (!orderResult.length) {
       return { success: false, error: 'Order not found or not eligible for deletion' };
     }
 
     // 首先删除所有关联的订单项
-    await prisma.orderItem.deleteMany({
-      where: {
-        orderId,
-      },
-    });
+    await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
 
     // 然后删除订单本身
-    await prisma.order.delete({
-      where: {
-        id: orderId,
-      },
-    });
+    await db.delete(orders).where(eq(orders.id, orderId));
 
     return { success: true, message: 'Order deleted successfully' };
   } catch (error) {
