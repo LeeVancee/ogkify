@@ -1,8 +1,11 @@
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, formatAmountFromStripe } from '@/lib/stripe';
-import { prisma } from '@/lib/prisma';
+
 import Stripe from 'stripe';
+import { db } from '@/db';
+import { cartItems, carts, orders } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 // 解析请求体为文本
 export async function POST(req: NextRequest) {
@@ -56,33 +59,29 @@ export async function POST(req: NextRequest) {
         const addressString = addressComponents.filter((c) => c !== null).join(', ');
 
         // 更新订单状态和地址信息
-        await prisma.order.update({
-          where: { id: orderId },
-          data: {
+
+        await db
+          .update(orders)
+          .set({
             status: 'PAID',
             paymentStatus: 'PAID',
             phone: session.customer_details?.phone || null,
             shippingAddress: addressString,
-          },
-        });
+          })
+          .where(eq(orders.id, orderId));
 
         // 清空用户购物车
         const userId = session.metadata?.userId;
         if (userId) {
-          const cart = await prisma.cart.findFirst({
-            where: { userId },
+          const cart = await db.query.carts.findFirst({
+            where: eq(carts.userId, userId),
           });
 
           if (cart) {
             // 删除购物车项
-            await prisma.cartItem.deleteMany({
-              where: { cartId: cart.id },
-            });
+            await db.delete(cartItems).where(eq(cartItems.cartId, cart.id));
           }
         }
-
-        const amountShipping = formatAmountFromStripe(session.shipping_cost?.amount_total || 0, 'usd');
-        const amount = formatAmountFromStripe(session.amount_total || 0, 'usd');
 
         break;
       }
@@ -95,13 +94,13 @@ export async function POST(req: NextRequest) {
 
         if (orderId) {
           // 更新订单状态
-          await prisma.order.update({
-            where: { id: orderId },
-            data: {
+          await db
+            .update(orders)
+            .set({
               status: 'CANCELLED',
               paymentStatus: 'FAILED',
-            },
-          });
+            })
+            .where(eq(orders.id, orderId));
         } else {
           // 注意：我们需要先确保数据库中有 paymentIntent 字段
           // 这里不再通过 paymentIntent 字段查询，因为模式中可能还没有
@@ -121,12 +120,12 @@ export async function POST(req: NextRequest) {
           const orderId = paymentIntent.metadata?.orderId;
 
           if (orderId) {
-            await prisma.order.update({
-              where: { id: orderId },
-              data: {
+            await db
+              .update(orders)
+              .set({
                 paymentStatus: 'REFUNDED',
-              },
-            });
+              })
+              .where(eq(orders.id, orderId));
           }
         }
 

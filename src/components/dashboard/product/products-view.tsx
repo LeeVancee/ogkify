@@ -60,7 +60,7 @@ export function ProductsView({ products: initialProducts }: ProductsViewProps) {
         setProducts(products.filter((p) => p.id !== productToDelete));
         toast.success('商品删除成功');
       } else {
-        toast.error(result.message);
+        toast.error(result.error || '删除失败');
       }
     } catch (error) {
       toast.error('删除失败');

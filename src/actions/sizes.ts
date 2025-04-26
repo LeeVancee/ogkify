@@ -2,20 +2,14 @@
 import { db } from '@/db';
 import { sizes } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 // 尺寸相关操作
 export async function getSizes() {
   try {
-    const result = await db
-      .select({
-        id: sizes.id,
-        name: sizes.name,
-        value: sizes.value,
-      })
-      .from(sizes)
-      .orderBy(sizes.name);
-
+    const result = await db.query.sizes.findMany({
+      orderBy: [asc(sizes.name)],
+    });
     return result;
   } catch (error) {
     console.error('获取尺寸失败:', error);
@@ -25,17 +19,9 @@ export async function getSizes() {
 
 export async function getSize(id: string) {
   try {
-    const result = await db
-      .select({
-        id: sizes.id,
-        name: sizes.name,
-        value: sizes.value,
-      })
-      .from(sizes)
-      .where(eq(sizes.id, id))
-      .limit(1);
-
-    const size = result[0];
+    const size = await db.query.sizes.findFirst({
+      where: eq(sizes.id, id),
+    });
 
     if (!size) {
       return { success: false, error: '尺寸不存在' };

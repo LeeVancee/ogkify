@@ -190,7 +190,7 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
     switch (status) {
       case 'COMPLETED':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'PAID': // 在Prisma中是"PAID"，表示处理中
+      case 'PAID':
         return <Clock className="h-5 w-5 text-blue-500" />;
       case 'PENDING':
         return <Clock className="h-5 w-5 text-blue-500" />;
@@ -220,7 +220,7 @@ export function OrderManagement({ initialOrders }: OrderManagementProps) {
     switch (status) {
       case 'COMPLETED':
         return 'Completed';
-      case 'PAID': // 在Prisma中是"PAID"，表示处理中
+      case 'PAID':
         return 'Processing';
       case 'PENDING':
         return 'Pending';

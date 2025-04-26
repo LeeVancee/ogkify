@@ -134,123 +134,47 @@ export async function getUserCart() {
       return { items: [], totalItems: 0 };
     }
 
-    // 获取用户购物车
-    const cartResult = await db
-      .select({
-        id: carts.id,
-      })
-      .from(carts)
-      .where(eq(carts.userId, session.user.id))
-      .limit(1);
+    // 使用关系查询获取用户购物车
+    const cart = await db.query.carts.findFirst({
+      where: eq(carts.userId, session.user.id),
+      with: {
+        items: {
+          with: {
+            product: {
+              with: {
+                images: true,
+              },
+            },
+            color: true,
+            size: true,
+          },
+        },
+      },
+    });
 
-    if (!cartResult.length) {
+    if (!cart || !cart.items.length) {
       return { items: [], totalItems: 0 };
     }
 
-    const cartId = cartResult[0].id;
-
-    // 获取购物车项
-    const cartItemsResult = await db
-      .select({
-        id: cartItems.id,
-        productId: cartItems.productId,
-        quantity: cartItems.quantity,
-        colorId: cartItems.colorId,
-        sizeId: cartItems.sizeId,
-      })
-      .from(cartItems)
-      .where(eq(cartItems.cartId, cartId));
-
-    if (!cartItemsResult.length) {
-      return { items: [], totalItems: 0 };
-    }
-
-    // 获取所有购物车项数据
-    const formattedItems = await Promise.all(
-      cartItemsResult.map(async (item) => {
-        // 获取产品信息
-        const productResult = await db
-          .select({
-            id: products.id,
-            name: products.name,
-            price: products.price,
-          })
-          .from(products)
-          .where(eq(products.id, item.productId))
-          .limit(1);
-
-        if (!productResult.length) {
-          return null;
-        }
-
-        const product = productResult[0];
-
-        // 获取图片
-        const imageResult = await db
-          .select({
-            url: images.url,
-          })
-          .from(images)
-          .where(eq(images.productId, item.productId))
-          .limit(1);
-
-        // 获取颜色
-        let colorData = null;
-        if (item.colorId) {
-          const colorResult = await db
-            .select({
-              name: colors.name,
-              value: colors.value,
-            })
-            .from(colors)
-            .where(eq(colors.id, item.colorId))
-            .limit(1);
-
-          if (colorResult.length) {
-            colorData = colorResult[0];
-          }
-        }
-
-        // 获取尺寸
-        let sizeData = null;
-        if (item.sizeId) {
-          const sizeResult = await db
-            .select({
-              name: sizes.name,
-              value: sizes.value,
-            })
-            .from(sizes)
-            .where(eq(sizes.id, item.sizeId))
-            .limit(1);
-
-          if (sizeResult.length) {
-            sizeData = sizeResult[0];
-          }
-        }
-
-        return {
-          id: item.id,
-          productId: item.productId,
-          name: product.name,
-          price: product.price,
-          quantity: item.quantity,
-          image: imageResult.length ? imageResult[0].url : '/placeholder.svg',
-          colorId: item.colorId,
-          colorName: colorData?.name || null,
-          colorValue: colorData?.value || null,
-          sizeId: item.sizeId,
-          sizeName: sizeData?.name || null,
-          sizeValue: sizeData?.value || null,
-        };
-      })
-    );
-
-    // 过滤掉null值（可能是由于产品已被删除）
-    const validItems = formattedItems.filter(Boolean);
+    // 格式化购物车项
+    const formattedItems = cart.items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      name: item.product.name,
+      price: item.product.price,
+      quantity: item.quantity,
+      image: item.product.images[0]?.url || '/placeholder.svg',
+      colorId: item.colorId,
+      colorName: item.color?.name || null,
+      colorValue: item.color?.value || null,
+      sizeId: item.sizeId,
+      sizeName: item.size?.name || null,
+      sizeValue: item.size?.value || null,
+    }));
 
     return {
-      items: validItems,
-      totalItems: validItems.length,
+      items: formattedItems,
+      totalItems: formattedItems.length,
     };
   } catch (error) {
     console.error('get cart failed:', error);

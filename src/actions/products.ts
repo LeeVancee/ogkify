@@ -37,89 +37,37 @@ export type ProductFormType = z.infer<typeof productFormSchema>;
 
 export async function getProduct(id: string) {
   try {
-    const product = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        description: products.description,
-        price: products.price,
-        isFeatured: products.isFeatured,
-        isArchived: products.isArchived,
-        categoryId: products.categoryId,
-        createdAt: products.createdAt,
-        updatedAt: products.updatedAt,
-      })
-      .from(products)
-      .where(eq(products.id, id))
-      .limit(1);
+    // 使用关系查询获取产品及其关联数据
+    const product = await db.query.products.findFirst({
+      where: eq(products.id, id),
+      with: {
+        category: true,
+        images: true,
+        colors: {
+          with: {
+            color: true,
+          },
+        },
+        sizes: {
+          with: {
+            size: true,
+          },
+        },
+      },
+    });
 
-    if (!product || product.length === 0) {
+    if (!product) {
       return null;
     }
 
-    const productData = product[0];
-
-    // 获取分类信息
-    const categoryData = await db.select().from(categories).where(eq(categories.id, productData.categoryId)).limit(1);
-
-    // 获取图片
-    const imageData = await db
-      .select({
-        id: images.id,
-        url: images.url,
-      })
-      .from(images)
-      .where(eq(images.productId, id));
-
-    // 获取颜色
-    const colorIds = await db
-      .select({
-        colorId: productsToColors.colorId,
-      })
-      .from(productsToColors)
-      .where(eq(productsToColors.productId, id));
-
-    const colorData = await db
-      .select()
-      .from(colors)
-      .where(
-        colorIds.length > 0
-          ? inArray(
-              colors.id,
-              colorIds.map((c) => c.colorId)
-            )
-          : undefined
-      );
-
-    // 获取尺寸
-    const sizeIds = await db
-      .select({
-        sizeId: productsToSizes.sizeId,
-      })
-      .from(productsToSizes)
-      .where(eq(productsToSizes.productId, id));
-
-    const sizeData = await db
-      .select()
-      .from(sizes)
-      .where(
-        sizeIds.length > 0
-          ? inArray(
-              sizes.id,
-              sizeIds.map((s) => s.sizeId)
-            )
-          : undefined
-      );
-
     return {
-      ...productData,
-      price: productData.price.toString(),
-      category: categoryData[0] || null,
-      images: imageData.map((img) => img.url),
-      colors: colorData,
-      sizes: sizeData,
-      colorIds: colorData.map((color) => color.id),
-      sizeIds: sizeData.map((size) => size.id),
+      ...product,
+      price: product.price.toString(),
+      images: product.images.map((img) => img.url),
+      colors: product.colors.map((pc) => pc.color),
+      sizes: product.sizes.map((ps) => ps.size),
+      colorIds: product.colors.map((pc) => pc.color.id),
+      sizeIds: product.sizes.map((ps) => ps.size.id),
     };
   } catch (error) {
     console.error('获取商品失败:', error);
@@ -216,87 +164,30 @@ export async function updateProduct(id: string, data: ProductFormType) {
 
 export async function getProducts() {
   try {
-    const productsData = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        description: products.description,
-        price: products.price,
-        isFeatured: products.isFeatured,
-        isArchived: products.isArchived,
-        categoryId: products.categoryId,
-        createdAt: products.createdAt,
-      })
-      .from(products)
-      .orderBy(desc(products.createdAt));
+    const productsList = await db.query.products.findMany({
+      orderBy: [desc(products.createdAt)],
+      with: {
+        category: true,
+        images: true,
+        colors: {
+          with: {
+            color: true,
+          },
+        },
+        sizes: {
+          with: {
+            size: true,
+          },
+        },
+      },
+    });
 
-    // 获取每个产品的附加信息
-    const productsWithRelations = await Promise.all(
-      productsData.map(async (product) => {
-        // 获取分类
-        const categoryResult = await db.select().from(categories).where(eq(categories.id, product.categoryId)).limit(1);
-
-        // 获取图片
-        const imagesResult = await db
-          .select({
-            url: images.url,
-          })
-          .from(images)
-          .where(eq(images.productId, product.id));
-
-        // 获取颜色
-        const colorIds = await db
-          .select({
-            colorId: productsToColors.colorId,
-          })
-          .from(productsToColors)
-          .where(eq(productsToColors.productId, product.id));
-
-        const colorsResult =
-          colorIds.length > 0
-            ? await db
-                .select()
-                .from(colors)
-                .where(
-                  inArray(
-                    colors.id,
-                    colorIds.map((c) => c.colorId)
-                  )
-                )
-            : [];
-
-        // 获取尺寸
-        const sizeIds = await db
-          .select({
-            sizeId: productsToSizes.sizeId,
-          })
-          .from(productsToSizes)
-          .where(eq(productsToSizes.productId, product.id));
-
-        const sizesResult =
-          sizeIds.length > 0
-            ? await db
-                .select()
-                .from(sizes)
-                .where(
-                  inArray(
-                    sizes.id,
-                    sizeIds.map((s) => s.sizeId)
-                  )
-                )
-            : [];
-
-        return {
-          ...product,
-          category: categoryResult[0] || null,
-          images: imagesResult,
-          colors: colorsResult,
-          sizes: sizesResult,
-        };
-      })
-    );
-
-    return productsWithRelations;
+    return productsList.map((product) => ({
+      ...product,
+      images: product.images,
+      colors: product.colors.map((pc) => pc.color),
+      sizes: product.sizes.map((ps) => ps.size),
+    }));
   } catch (error) {
     console.error('获取商品列表失败:', error);
     return [];

@@ -13,19 +13,15 @@ import { eq, and, desc } from 'drizzle-orm';
 export async function getFeaturedProducts(limit: number = 4): Promise<Product[]> {
   try {
     // 从数据库获取特色商品
-    const featuredProducts = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        description: products.description,
-        price: products.price,
-        categoryId: products.categoryId,
-        createdAt: products.createdAt,
-      })
-      .from(products)
-      .where(and(eq(products.isFeatured, true), eq(products.isArchived, false)))
-      .orderBy(desc(products.createdAt))
-      .limit(limit);
+    const featuredProducts = await db.query.products.findMany({
+      where: and(eq(products.isFeatured, true), eq(products.isArchived, false)),
+      orderBy: [desc(products.createdAt)],
+      limit,
+      with: {
+        category: true,
+        images: true,
+      },
+    });
 
     // 获取每个商品的关联数据
     const productsWithRelations = await Promise.all(

@@ -7,13 +7,27 @@ import { eq, and, not, inArray } from 'drizzle-orm';
 export async function getProduct(id: string) {
   try {
     // 获取产品基本信息
-    const productResult = await db.select().from(products).where(eq(products.id, id)).limit(1);
+    const product = await db.query.products.findFirst({
+      where: eq(products.id, id),
+      with: {
+        category: true,
+        images: true,
+        colors: {
+          with: {
+            color: true,
+          },
+        },
+        sizes: {
+          with: {
+            size: true,
+          },
+        },
+      },
+    });
 
-    if (!productResult.length) {
+    if (!product) {
       return null;
     }
-
-    const product = productResult[0];
 
     // 获取分类
     const categoryResult = await db.select().from(categories).where(eq(categories.id, product.categoryId)).limit(1);

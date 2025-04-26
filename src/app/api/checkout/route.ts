@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, formatAmountForStripe } from '@/lib/stripe';
 import { getSession } from '@/actions/getSession';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { carts, orders, orderItems } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,13 +15,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 获取用户的购物车
-    const cart = await prisma.cart.findFirst({
-      where: { userId: session.user.id },
-      include: {
+    const cart = await db.query.carts.findFirst({
+      where: eq(carts.userId, session.user.id),
+      with: {
         items: {
-          include: {
+          with: {
             product: {
-              include: {
+              with: {
                 images: true,
               },
             },
@@ -58,24 +60,35 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // 创建订单
-    const order = await prisma.order.create({
-      data: {
-        userId: session.user.id,
-        orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        totalAmount: amount,
-        status: 'PENDING',
-        paymentStatus: 'UNPAID', // 明确设置支付状态
-        items: {
-          create: cart.items.map((item) => ({
+    // 使用事务创建订单和订单项
+    const order = await db.transaction(async (tx) => {
+      // 创建订单
+      const [newOrder] = await tx
+        .insert(orders)
+        .values({
+          userId: session.user.id,
+          orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          totalAmount: amount,
+          status: 'PENDING',
+          paymentStatus: 'UNPAID',
+        })
+        .returning();
+
+      // 创建订单项
+      if (cart.items.length > 0) {
+        await tx.insert(orderItems).values(
+          cart.items.map((item) => ({
+            orderId: newOrder.id,
             productId: item.productId,
             quantity: item.quantity,
             price: item.product.price,
             colorId: item.colorId,
             sizeId: item.sizeId,
-          })),
-        },
-      },
+          }))
+        );
+      }
+
+      return newOrder;
     });
 
     // 创建 Stripe 结账会话
@@ -100,13 +113,13 @@ export async function POST(req: NextRequest) {
     });
 
     // 更新订单，添加 Stripe 会话 ID
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
+    await db
+      .update(orders)
+      .set({
         paymentMethod: 'Stripe',
         paymentIntent: checkoutSession.id,
-      },
-    });
+      })
+      .where(eq(orders.id, order.id));
 
     return NextResponse.json({
       sessionId: checkoutSession.id,

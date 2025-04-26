@@ -31,8 +31,24 @@ export async function getFilteredProducts(
     const limit = options.limit || 12;
     const skip = (page - 1) * limit;
 
-    // 构建初始查询 - 获取非归档产品
-    let productsData = await db.select().from(products).where(eq(products.isArchived, false));
+    // 构建产品查询
+    let productsData = await db.query.products.findMany({
+      where: eq(products.isArchived, false),
+      with: {
+        category: true,
+        images: true,
+        colors: {
+          with: {
+            color: true,
+          },
+        },
+        sizes: {
+          with: {
+            size: true,
+          },
+        },
+      },
+    });
 
     // 应用过滤条件
 

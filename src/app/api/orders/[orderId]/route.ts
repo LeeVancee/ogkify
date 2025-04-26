@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/actions/getSession';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/db';
+import { orders } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
 
 // 获取单个订单详情
 export async function GET(request: NextRequest, props: { params: Promise<{ orderId: string }> }) {
@@ -15,12 +17,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ order
     }
 
     // 查询订单，确保订单属于当前登录用户
-    const order = await prisma.order.findUnique({
-      where: {
-        id: orderId,
-        userId: session.user.id,
-      },
-      select: {
+    const order = await db.query.orders.findFirst({
+      where: and(eq(orders.id, orderId), eq(orders.userId, session.user.id)),
+      columns: {
         id: true,
         orderNumber: true,
         status: true,

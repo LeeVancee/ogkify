@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 interface OrderItem {
   id: string;
   productId: string;
-  productName: string;
+  productName: string | undefined;
   quantity: number;
   price: number;
   imageUrl: string | null;
@@ -47,8 +47,8 @@ export default function MyOrdersPage() {
     try {
       const [allResponse, unpaidResponse] = await Promise.all([getUserOrders(), getUnpaidOrders()]);
 
-      setAllOrders(allResponse.success ? allResponse.orders : []);
-      setUnpaidOrders(unpaidResponse.success ? unpaidResponse.orders : []);
+      setAllOrders(allResponse.success ? (allResponse.orders as Order[]) : []);
+      setUnpaidOrders(unpaidResponse.success ? (unpaidResponse.orders as Order[]) : []);
     } catch (error) {
       console.error('加载订单失败:', error);
     } finally {
@@ -250,11 +250,15 @@ function OrdersList({
                       <div className="flex items-center gap-2">
                         {item.imageUrl && (
                           <div className="h-12 w-12 overflow-hidden rounded-md">
-                            <img src={item.imageUrl} alt={item.productName} className="h-full w-full object-cover" />
+                            <img
+                              src={item.imageUrl}
+                              alt={item.productName || '未命名商品'}
+                              className="h-full w-full object-cover"
+                            />
                           </div>
                         )}
                         <div>
-                          <div>{item.productName}</div>
+                          <div>{item.productName || '未命名商品'}</div>
                           {item.color && <div className="text-xs text-muted-foreground">Color: {item.color.name}</div>}
                           {item.size && <div className="text-xs text-muted-foreground">Size: {item.size.name}</div>}
                         </div>

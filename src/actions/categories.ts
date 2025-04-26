@@ -2,19 +2,14 @@
 import { db } from '@/db';
 import { categories } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 
 // 分类相关操作
 export async function getCategories() {
   try {
-    const result = await db
-      .select({
-        id: categories.id,
-        name: categories.name,
-        imageUrl: categories.imageUrl,
-      })
-      .from(categories)
-      .orderBy(categories.createdAt);
+    const result = await db.query.categories.findMany({
+      orderBy: [asc(categories.createdAt)],
+    });
 
     return result;
   } catch (error) {

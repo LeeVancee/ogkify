@@ -16,11 +16,24 @@ export async function getUserOrders() {
     }
 
     // 获取用户订单
-    const userOrders = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.userId, session.user.id))
-      .orderBy(desc(orders.createdAt));
+    const userOrders = await db.query.orders.findMany({
+      where: eq(orders.userId, session.user.id),
+      orderBy: [desc(orders.createdAt)],
+      with: {
+        items: {
+          with: {
+            product: {
+              with: {
+                images: true,
+              },
+            },
+            color: true,
+            size: true,
+          },
+        },
+        user: true,
+      },
+    });
 
     // 格式化订单以及获取关联数据
     const formattedOrders = await Promise.all(

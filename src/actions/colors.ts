@@ -2,20 +2,14 @@
 import { db } from '@/db';
 import { colors } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 // 颜色相关操作
 export async function getColors() {
   try {
-    const result = await db
-      .select({
-        id: colors.id,
-        name: colors.name,
-        value: colors.value,
-      })
-      .from(colors)
-      .orderBy(colors.name);
-
+    const result = await db.query.colors.findMany({
+      orderBy: [asc(colors.createdAt)],
+    });
     return result;
   } catch (error) {
     console.error('获取颜色失败:', error);
@@ -25,17 +19,9 @@ export async function getColors() {
 
 export async function getColor(id: string) {
   try {
-    const result = await db
-      .select({
-        id: colors.id,
-        name: colors.name,
-        value: colors.value,
-      })
-      .from(colors)
-      .where(eq(colors.id, id))
-      .limit(1);
-
-    const color = result[0];
+    const color = await db.query.colors.findFirst({
+      where: eq(colors.id, id),
+    });
 
     if (!color) {
       return { success: false, error: '颜色不存在' };

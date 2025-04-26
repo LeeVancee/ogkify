@@ -25,7 +25,7 @@ interface Order {
   paymentStatus: string;
 }
 
-// 定义订单状态类型 - 与Prisma模型对应
+// 定义订单状态类型
 type OrderStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
 
 // 定义订单状态选项 - 与实际UI显示对应
